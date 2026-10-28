@@ -189,6 +189,9 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- The trigger can invoke the function, but application roles cannot call it as an RPC.
+revoke all on function public.handle_new_user() from public, anon, authenticated;
+
 alter table public.profiles enable row level security;
 alter table public.corridors enable row level security;
 alter table public.trips enable row level security;
