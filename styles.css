@@ -112,3 +112,22 @@ input::placeholder{color:#98a9a7}
 @media(max-width:1000px){.hero{gap:35px;padding-left:6vw;padding-right:6vw}.how-section{grid-template-columns:1fr;gap:35px}.section-intro{max-width:600px}.passport-section{grid-template-columns:1fr;gap:35px}.passport-copy{max-width:600px}.steps{max-width:900px}}
 @media(max-width:700px){.demo-banner{font-size:9px;letter-spacing:.06em}.site-header{height:68px;padding:0 19px;gap:10px}.brand{font-size:19px}.desktop-nav{display:none}.header-link{font-size:11px;max-width:155px;text-align:right;white-space:normal;line-height:1.3}.hero{display:flex;flex-direction:column;align-items:stretch;gap:28px;padding:53px 19px 40px;min-height:0}.hero-copy{max-width:100%}h1{font-size:57px}.hero-description{font-size:15px;line-height:1.65}.hero-points{gap:10px 14px;font-size:10px}.search-card{padding:21px;border-radius:19px}.card-heading h2{font-size:20px}.trust-strip{grid-template-columns:1fr;gap:18px;padding:23px 24px}.trust-item{justify-content:flex-start}.section{padding:64px 19px}.section-intro h2,.passport-copy h2,.closing-cta h2{font-size:37px}.steps{grid-template-columns:1fr;gap:12px}.step-card{display:grid;grid-template-columns:42px 65px 1fr;column-gap:12px;align-items:center;padding:15px}.step-number{grid-row:1 / span 2;align-self:start;padding-top:5px}.step-illustration{grid-column:2;grid-row:1 / span 2;height:62px;margin:0;font-size:28px}.step-card h3{grid-column:3;margin:0 0 4px}.step-card p{grid-column:3}.passport-section{padding-top:58px;padding-bottom:58px}.timeline-card{padding:17px;border-radius:18px}.timeline-top{align-items:flex-start}.route-line{gap:6px}.route-line strong{font-size:9px}.small-label{font-size:8px}.timeline-event{grid-template-columns:25px 1fr;gap:9px;min-height:66px}.event-tag{grid-column:2;padding:0 0 9px}.gp-section{padding-top:0}.gp-panel{grid-template-columns:1fr;padding:30px 23px 15px;min-height:0;border-radius:20px}.gp-graphic{min-height:180px}.orbit{width:205px;height:205px}.orbit-b{width:145px;height:145px}.parcel-box{width:72px;height:72px;border-radius:18px}.pin-a{left:15%;top:16px}.pin-b{right:14%;bottom:15px}.closing-cta{padding:50px 20px 64px}.site-footer{flex-wrap:wrap;padding:22px 19px}.site-footer p{order:3;flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
+
+/* Première tranche interactive — données fictives stockées localement uniquement */
+.results-section{padding-top:42px;padding-bottom:48px;background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.results-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}
+.results-heading h2{font-size:clamp(25px,3vw,36px);line-height:1.15;letter-spacing:-.04em;margin:0;max-width:760px}
+.results-disclaimer{font-size:12px;color:var(--muted);max-width:760px;line-height:1.7}
+.trip-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:22px}
+.trip-card{border:1px solid var(--line);border-radius:16px;padding:18px;background:var(--paper);min-width:0}
+.trip-card h3{font-size:15px;margin:0 0 10px;overflow-wrap:anywhere}
+.trip-route{font-weight:850;font-size:14px}
+.trip-meta{font-size:11px;color:var(--muted);margin:9px 0 0}
+.trip-demo-tag{display:inline-block;font-size:9px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;background:var(--mint);color:var(--teal-dark);padding:5px 8px;border-radius:99px;margin-bottom:12px}
+.trip-empty{grid-column:1/-1;border:1px dashed #b7c9c0;border-radius:16px;padding:22px;color:var(--muted);font-size:13px}
+.trip-form{margin-top:22px;max-width:520px}.form-kicker{font-size:12px;font-weight:850;color:#e0eee6;margin:0 0 12px}
+.trip-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.trip-form label{display:block;color:#d6e4df;font-size:10px;font-weight:800;margin:0 0 5px}
+.trip-form input{width:100%;min-width:0;background:#fff;color:var(--ink);border:1px solid #d9e4de;border-radius:10px;padding:10px 11px;font-size:12px}
+.trip-form .button{margin-top:13px;border:0;cursor:pointer}.trip-feedback{font-size:10px;color:#c2d2d0;line-height:1.6;margin:10px 0 0}
+@media(max-width:700px){.results-section{padding-top:40px;padding-bottom:42px}.results-heading{align-items:flex-start;flex-direction:column;gap:12px}.trip-results{grid-template-columns:1fr}.trip-form-grid{grid-template-columns:1fr 1fr}}
