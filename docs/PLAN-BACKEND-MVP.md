@@ -6,6 +6,10 @@ Statut : préparation technique, non connecté à une base de données. Ce docum
 
 Le compte Supabase actuellement accessible ne présente pas de projet JotColis dédié. Le seul projet repéré est « Dekk Food », inactif et sans rapport avec JotColis. **Ne pas le réutiliser, le restaurer ou y modifier le schéma.** Créer un projet séparé seulement après vérification et acceptation explicite du coût affiché par Supabase. Les migrations seront versionnées dans ce dépôt avant leur application.
 
+## Migration SQL préparée (non exécutée)
+
+Un premier brouillon de schéma est versionné dans `supabase/migrations/202610280001_initial_schema_draft.sql`. Il comprend les tables de base, contraintes, index, RLS et permissions initiales. Il n’a été ni appliqué ni validé sur un projet Supabase : il faut le relire et le tester dans un projet JotColis séparé avant toute exécution. Les réservations et changements de capacité restent volontairement sans écriture directe côté client ; ils devront être implémentés via des fonctions serveur transactionnelles.
+
 ## Première tranche backend
 
 ### Identité et rôles
