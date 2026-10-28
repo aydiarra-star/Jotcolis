@@ -1,4 +1,4 @@
-:root{--ink:#153b43;--ink-soft:#35565c;--muted:#6c8184;--paper:#f7f7f1;--white:#fff;--line:#e1e8e4;--teal:#145e61;--teal-dark:#0e484c;--mint:#dceee6;--amber:#e8b765;--danger:#a43e3e;--radius:22px;--shadow:0 18px 55px rgba(21,59,67,.09)}
+:root{--ink:#242326;--ink-soft:#4e4a4d;--muted:#777178;--paper:#fffaf6;--white:#fff;--line:#f0e4dc;--teal:#f47721;--teal-dark:#df5d0b;--mint:#fff0e3;--amber:#ff9b52;--danger:#a43e3e;--radius:22px;--shadow:0 18px 55px rgba(108,55,18,.10)}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:15px;line-height:1.55}
@@ -131,3 +131,25 @@ input::placeholder{color:#98a9a7}
 .trip-form input{width:100%;min-width:0;background:#fff;color:var(--ink);border:1px solid #d9e4de;border-radius:10px;padding:10px 11px;font-size:12px}
 .trip-form .button{margin-top:13px;border:0;cursor:pointer}.trip-feedback{font-size:10px;color:#c2d2d0;line-height:1.6;margin:10px 0 0}
 @media(max-width:700px){.results-section{padding-top:40px;padding-bottom:42px}.results-heading{align-items:flex-start;flex-direction:column;gap:12px}.trip-results{grid-template-columns:1fr}.trip-form-grid{grid-template-columns:1fr 1fr}}
+
+/* JotColis — direction visuelle inspirée des codes chaleureux de ColiLink, sans copier son identité. */
+.demo-banner{background:#242326;color:#fff}
+.site-header{background:#fff;border-bottom-color:#f2e7df}
+.brand-mark{background:#f47721;color:#fff}
+.desktop-nav a:hover,.text-link:hover,.header-link:hover{color:#df5d0b}
+.header-link span,.eyebrow,.text-link{color:#f47721}
+.hero{background:linear-gradient(115deg,#fff8f1 0%,#fff1e5 57%,#ffe5d0 100%)}
+h1 span,.passport-copy h2 span{color:#f47721}
+.eyebrow-dot{background:#f47721}
+.check,.trust-icon,.card-icon{background:#fff0e3;color:#df5d0b}
+.input-wrap{color:#f47721}
+.button-primary{background:#f47721;color:#fff}
+.button-primary:hover{background:#df5d0b}
+.feedback{background:#fff0e3;color:#7a3b12}
+.trust-strip{background:#fff;border-bottom-color:#f0e4dc}
+.step-illustration{background:#fff0e3;color:#df5d0b}
+.illustration-hand{background:#fff4e8;color:#b95a1b}
+.illustration-check{background:#fff0e3;color:#df5d0b}
+.passport-section{background:#fff1e6}
+.trip-demo-tag{background:#fff0e3;color:#9a430d}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline-color:#f47721}
