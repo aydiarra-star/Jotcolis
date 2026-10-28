@@ -4,7 +4,7 @@
 
 JotColis est un projet de plateforme mobile-first mettant en relation expéditeurs, voyageurs transporteurs (GP) et destinataires. L’objectif est de faciliter la recherche de trajets, d’améliorer la traçabilité et d’organiser la gestion des incidents.
 
-> **État : fondations en cours.** Ce dépôt ne constitue pas encore une application opérationnelle. Aucune fonctionnalité, intégration, validation juridique ou mise en production ne doit être annoncée comme réalisée sans preuve.
+> **État : prototype frontend exécutable en cours.** Le point d’entrée racine est une prévisualisation statique interactive ; la recherche reste une démonstration et aucune réservation, authentification, base de données, géolocalisation ou paiement réel n’est activé. Aucune intégration ou validation juridique ne doit être annoncée comme réalisée sans preuve.
 
 ## Principes
 - Confiance vérifiable : identité, voyage et fiabilité sont des statuts distincts.
@@ -25,6 +25,17 @@ JotColis est un projet de plateforme mobile-first mettant en relation expéditeu
 7. Notifications, annulations, incidents et réclamations.
 8. Console d’administration et journal d’audit.
 9. Règles de corridor et de catégories issues de sources vérifiées.
+
+## Lancer la prévisualisation en local
+
+Prérequis : Node.js 20 ou supérieur. Aucune dépendance npm externe n’est nécessaire.
+
+```bash
+npm test
+npm run build
+```
+
+Le site statique généré se trouve dans `dist/`. Un Blueprint Render est fourni dans `render.yaml` pour préparer un service de prévisualisation ; il doit encore être créé et validé dans le compte Render.
 
 ## Documentation
 - [Prompt maître](docs/PROMPT-MAITRE.md)
