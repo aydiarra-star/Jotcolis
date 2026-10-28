@@ -219,3 +219,51 @@ input,select,.input-wrap{max-width:100%;min-width:0}
  .form-row{grid-template-columns:minmax(0,1fr)}
  .route-line{gap:4px}
 }
+
+
+/* JotColis — palette orange cohérente et liaison Paris–Dakar animée */
+:root{--ink:#242326;--ink-soft:#4e4a4d;--muted:#777178;--paper:#fffaf6;--line:#f0e4dc;--teal:#f47721;--teal-dark:#df5d0b;--mint:#fff0e3;--amber:#ff9b52;--blue:#f47721;--blue-deep:#b94c08;--blue-soft:#fff0e3;--surface:#fff;--shadow:0 18px 48px rgba(183,78,13,.12)}
+body{background:#fffaf6;color:#242326}
+.demo-banner{background:#242326;color:#fff}
+.brand-mark,.brand-footer .brand-mark{background:linear-gradient(145deg,#ff9b52,#f47721);color:#fff;box-shadow:0 7px 15px rgba(244,119,33,.22)}
+.desktop-nav a:hover,.text-link,.header-link span,.eyebrow,.text-link:hover,.header-link:hover{color:#df5d0b}
+.hero{background:radial-gradient(ellipse at 80% 10%,rgba(244,119,33,.14),transparent 36%),linear-gradient(125deg,#fffaf6 0%,#fff1e6 58%,#ffe1c8 100%)}
+h1 span,.passport-copy h2 span{color:#f47721}
+.eyebrow-dot{background:#f47721}
+.check,.trust-icon,.card-icon,.step-illustration,.illustration-check{background:#fff0e3;color:#df5d0b}
+.illustration-hand{background:#ffe5d0;color:#b94c08}
+.button-primary{background:#f47721;color:#fff;box-shadow:0 8px 18px rgba(244,119,33,.22)}
+.button-primary:hover{background:#df5d0b}
+.input-wrap{color:#f47721}
+input:focus,select:focus,.input-wrap:focus-within{border-color:#f47721;box-shadow:0 0 0 3px rgba(244,119,33,.13)}
+.feedback{background:#fff0e3;color:#7a3b12}
+.passport-section{background:#fff0e3}
+.status-pill{background:#fff0e3;color:#9a430d}
+.route-point{background:#f47721}
+.route-point-end{background:#df5d0b}
+.route-dash{border-top-color:#efb487}
+.gp-panel{background:linear-gradient(125deg,#33251e,#78370f 70%,#f47721);box-shadow:0 18px 48px rgba(130,59,13,.16)}
+.gp-copy .eyebrow{color:#ffd1ad}
+.parcel-box{background:#fff;color:#f47721;box-shadow:0 16px 35px rgba(60,25,4,.24)}
+.graphic-pin{background:#fff0e3;color:#c65308}
+.pin-b{background:#fff;color:#c65308}
+.trip-demo-tag{background:#fff0e3;color:#9a430d}
+.mobile-bottom-nav{background:linear-gradient(115deg,#b94c08,#f47721);box-shadow:0 14px 38px rgba(183,78,13,.28)}
+.mobile-bottom-nav a[aria-current="page"]{color:#b94c08}
+.mobile-bottom-nav a[aria-current="page"]:before{background:#ffbd8c}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline-color:#f47721}
+.flight-track{position:relative;display:block;flex:1;min-width:28px;height:22px;border-top:1px dashed #efb487;margin:0 4px}
+.route-line .flight-track{height:24px;align-self:center}
+.route-plane{position:absolute;left:0;top:-12px;width:22px;height:22px;color:#f47721;filter:drop-shadow(0 2px 2px rgba(183,78,13,.2));animation:parisDakarFlight 5.2s ease-in-out infinite}
+.trip-flight{display:flex;align-items:center;gap:8px;margin:14px 0 10px;padding:10px 11px;background:#fff0e3;border:1px solid #ffe0c6;border-radius:12px}
+.flight-city{font-size:10px;font-weight:850;color:#8e3b09;white-space:nowrap}
+.trip-flight .flight-track{border-top-color:#eab184}
+.trip-flight .route-plane{animation-duration:5.2s}
+@keyframes parisDakarFlight{
+  0%{left:0;opacity:0;transform:translateY(2px) rotate(0deg)}
+  8%{opacity:1}
+  68%{left:calc(100% - 22px);opacity:1;transform:translateY(-2px) rotate(0deg)}
+  78%{left:calc(100% - 22px);opacity:0;transform:translateY(-2px) rotate(0deg)}
+  100%{left:0;opacity:0;transform:translateY(2px) rotate(0deg)}
+}
+@media(prefers-reduced-motion:reduce){.route-plane{animation:none;left:calc(50% - 11px);opacity:1}}
