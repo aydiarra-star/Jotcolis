@@ -22,7 +22,7 @@ test("search form has origin, destination and accessible feedback", () => {
   assert.match(html, /id="origin"/);
   assert.match(html, /id="destination"/);
   assert.match(html, /aria-live="polite"/);
-  assert.match(js, /addEventListener\("submit"/);
+  assert.ok(js.includes('addEventListener("submit"'));
 });
 
 test("stylesheet includes keyboard focus and responsive layout", () => {
