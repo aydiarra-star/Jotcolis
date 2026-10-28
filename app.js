@@ -25,7 +25,9 @@ function renderTrips(trips) {
   if (!list.length) { tripResults.innerHTML = '<div class="trip-empty">Aucun exemple ne correspond. Essayez une autre recherche ou ajoutez un trajet fictif.</div>'; return; }
   tripResults.innerHTML = list.map(function (trip) {
     const date = trip.date ? new Date(trip.date + "T12:00:00").toLocaleDateString("fr-FR", {day:"numeric",month:"long",year:"numeric"}) : "Date non précisée";
-    return '<article class="trip-card"><span class="trip-demo-tag">Exemple fictif</span><h3>' + escapeHtml(trip.origin) + ' <span aria-hidden="true">→</span> ' + escapeHtml(trip.destination) + '</h3><p class="trip-route">' + date + '</p><p class="trip-meta">Capacité illustrative : ' + Number(trip.capacity) + ' kg</p><p class="trip-meta">Aucun GP réel · Aucune réservation possible</p></article>';
+    const isParisDakar = norm(trip.origin) === "paris" && norm(trip.destination) === "dakar";
+    const flight = isParisDakar ? '<div class="trip-flight" aria-label="Animation de la liaison Paris–Dakar"><span class="flight-city">Paris</span><span class="flight-track"><svg class="route-plane" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 14.5 21l-3.7-7.8L3 9.5 21 3Z" fill="currentColor"/><path d="m10.8 13.2 4.7-4.7" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg></span><span class="flight-city">Dakar</span></div>' : "";
+    return '<article class="trip-card' + (isParisDakar ? ' trip-card-flight' : '') + '"><span class="trip-demo-tag">Exemple fictif</span><h3>' + escapeHtml(trip.origin) + ' <span aria-hidden="true">→</span> ' + escapeHtml(trip.destination) + '</h3>' + flight + '<p class="trip-route">' + date + '</p><p class="trip-meta">Capacité illustrative : ' + Number(trip.capacity) + ' kg</p><p class="trip-meta">Aucun GP réel · Aucune réservation possible</p></article>';
   }).join("");
 }
 if (form && feedback) {
