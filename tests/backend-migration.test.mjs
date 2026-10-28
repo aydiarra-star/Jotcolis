@@ -56,7 +56,7 @@ test("public corridor grants exclude internal validation notes", () => {
 test("auth trigger helper is not directly executable by application roles", () => {
   assert.match(
     migration,
-    /revoke all on function public\\.handle_new_user\\(\\) from public, anon, authenticated;/
+    /revoke all on function public\.handle_new_user\(\) from public, anon, authenticated;/
   );
 });
 
