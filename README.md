@@ -28,7 +28,7 @@ JotColis est un projet de plateforme mobile-first mettant en relation expéditeu
 
 ## Prévisualisation en ligne
 
-La première prévisualisation statique est déployée sur Render : [jotcolis-preview.onrender.com](https://jotcolis-preview.onrender.com). Elle est liée à la branche `feature/fondations-jotcolis` et se redéploie automatiquement après les nouveaux commits de cette branche. Il s’agit d’une démonstration frontend, pas encore d’un service de livraison opérationnel.
+La prévisualisation interactive est déployée sur Render : [jotcolis-preview.onrender.com](https://jotcolis-preview.onrender.com). Elle est liée à la branche `feature/fondations-jotcolis`. Elle permet de filtrer des trajets fictifs et d’ajouter un trajet de démonstration stocké dans le navigateur local. Ces données ne sont pas partagées avec d’autres utilisateurs et ne constituent pas des disponibilités réelles. Il ne s’agit pas encore d’un service de livraison opérationnel.
 
 ## Lancer la prévisualisation en local
 
