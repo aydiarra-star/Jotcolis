@@ -211,8 +211,10 @@ grant update (display_name, phone, country_code) on public.profiles to authentic
 -- Public/anonymous read is limited to active corridors. Writes remain server/admin-only.
 create policy corridors_read_active on public.corridors
   for select to anon, authenticated using (is_active = true);
-grant select on public.corridors to anon, authenticated;
-revoke insert, update, delete on public.corridors from anon, authenticated;
+revoke all on public.corridors from anon, authenticated;
+-- Explicit column grants avoid exposing internal validation_notes to ordinary clients.
+grant select (id, origin_country_code, destination_country_code, origin_label,
+  destination_label, is_active, rules_url) on public.corridors to anon, authenticated;
 
 -- Only published trips on active corridors are public. GP can read their own drafts.
 create policy trips_read_published_or_owner on public.trips
