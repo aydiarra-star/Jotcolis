@@ -53,6 +53,13 @@ test("public corridor grants exclude internal validation notes", () => {
   );
 });
 
+test("auth trigger helper is not directly executable by application roles", () => {
+  assert.match(
+    migration,
+    /revoke all on function public\\.handle_new_user\\(\\) from public, anon, authenticated;/
+  );
+});
+
 test("draft does not include a Supabase service-role secret", () => {
   assert.doesNotMatch(migration, /service_role_key|SUPABASE_SERVICE_ROLE_KEY/i);
 });
