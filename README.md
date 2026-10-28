@@ -45,6 +45,7 @@ Le site statique généré se trouve dans `dist/`. Un Blueprint Render est fourn
 - [Prompt maître](docs/PROMPT-MAITRE.md)
 - [Cahier des charges fonctionnel](docs/CAHIER-DES-CHARGES.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
+- [Plan backend MVP et sécurité](docs/PLAN-BACKEND-MVP.md)
 - [Feuille de route](docs/ROADMAP.md)
 - [Parcours UX](docs/UX-PARCOURS.md)
 - [Identité visuelle](docs/IDENTITE-VISUELLE.md)
