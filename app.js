@@ -66,3 +66,14 @@ if (tripForm && tripFeedback) {
   });
 }
 renderTrips();
+
+
+// Navigation mobile : conserve un état actif lisible après chaque sélection.
+document.querySelectorAll(".mobile-bottom-nav a").forEach(function (link) {
+  link.addEventListener("click", function () {
+    document.querySelectorAll(".mobile-bottom-nav a").forEach(function (item) {
+      item.removeAttribute("aria-current");
+    });
+    link.setAttribute("aria-current", "page");
+  });
+});
