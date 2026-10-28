@@ -9,7 +9,7 @@
   <script src="./app.js" defer></script>
 </head>
 <body>
-  <div class="demo-banner">PROTOTYPE DE CONCEPTION · Aucune réservation réelle n’est effectuée</div>
+  <div class="demo-banner">DÉMONSTRATION · Données locales fictives · Aucune réservation réelle</div>
   <header class="site-header">
     <a class="brand" href="#" aria-label="JotColis, accueil">
       <span class="brand-mark" aria-hidden="true">J</span>
@@ -77,6 +77,12 @@
       <div class="trust-item"><span class="trust-icon" aria-hidden="true">↗</span><div><strong>Des règles visibles</strong><p>Conditions avant confirmation.</p></div></div>
     </section>
 
+    <section class="section results-section" id="resultats" aria-labelledby="results-title">
+      <div class="results-heading"><div><p class="eyebrow">Moteur de recherche · mode démo</p><h2 id="results-title">Trajets de démonstration</h2></div><span class="status-pill">Données fictives</span></div>
+      <p class="results-disclaimer">Ces exemples sont fictifs et servent uniquement à tester le parcours dans ce navigateur. Ils ne correspondent pas à des voyageurs ni à des disponibilités réels.</p>
+      <div id="trip-results" class="trip-results" aria-live="polite"></div>
+    </section>
+
     <section class="section how-section" id="fonctionnement">
       <div class="section-intro">
         <p class="eyebrow">Simple et transparent</p>
@@ -112,7 +118,17 @@
 
     <section class="section gp-section" id="publier">
       <div class="gp-panel">
-        <div class="gp-copy"><p class="eyebrow">Vous prenez bientôt la route ?</p><h2>Votre trajet peut aider quelqu’un.</h2><p>Les voyageurs pourront publier leurs dates, leur itinéraire et leur capacité disponible, puis gérer les demandes au même endroit.</p><a class="button button-light" href="#search-form" id="gp-demo-link">Découvrir l’espace GP <span aria-hidden="true">→</span></a></div>
+        <div class="gp-copy"><p class="eyebrow">Vous prenez bientôt la route ?</p><h2>Votre trajet peut aider quelqu’un.</h2><p>Les voyageurs pourront publier leurs dates, leur itinéraire et leur capacité disponible, puis gérer les demandes au même endroit.</p><form id="trip-form" class="trip-form">
+            <p class="form-kicker">Tester la publication d’un trajet fictif</p>
+            <div class="trip-form-grid">
+              <div><label for="trip-origin">Départ</label><input id="trip-origin" name="trip-origin" placeholder="Paris" required maxlength="80"></div>
+              <div><label for="trip-destination">Destination</label><input id="trip-destination" name="trip-destination" placeholder="Dakar" required maxlength="80"></div>
+              <div><label for="trip-date">Date de départ</label><input id="trip-date" name="trip-date" type="date" required></div>
+              <div><label for="trip-capacity">Capacité (kg)</label><input id="trip-capacity" name="trip-capacity" type="number" min="1" max="100" value="5" required></div>
+            </div>
+            <button class="button button-light" type="submit">Ajouter à ma démo <span aria-hidden="true">→</span></button>
+            <p id="trip-feedback" class="trip-feedback" role="status" aria-live="polite">Enregistrement local à ce navigateur uniquement.</p>
+          </form></div>
         <div class="gp-graphic" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="parcel-box"><span>J</span></div><div class="graphic-pin pin-a">●</div><div class="graphic-pin pin-b">●</div></div>
       </div>
     </section>
