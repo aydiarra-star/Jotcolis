@@ -46,6 +46,7 @@ Le site statique généré se trouve dans `dist/`. Un Blueprint Render est fourn
 - [Cahier des charges fonctionnel](docs/CAHIER-DES-CHARGES.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
 - [Plan backend MVP et sécurité](docs/PLAN-BACKEND-MVP.md)
+- [Brouillon de migration Supabase — non exécuté](supabase/migrations/202610280001_initial_schema_draft.sql)
 - [Feuille de route](docs/ROADMAP.md)
 - [Parcours UX](docs/UX-PARCOURS.md)
 - [Identité visuelle](docs/IDENTITE-VISUELLE.md)
