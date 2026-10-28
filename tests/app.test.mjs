@@ -11,21 +11,31 @@ test("landing page declares French and mobile viewport", () => {
   assert.match(html, /name="viewport"/);
 });
 
-test("demo makes no false claim of real booking or tracking", () => {
-  assert.match(html, /Aucune réservation réelle/);
-  assert.match(html, /Tous les événements ci-dessus sont fictifs/);
-  assert.match(js, /Aucun trajet réel n’a été consulté/);
-  assert.match(js, /Aucune publication de trajet n’est actuellement enregistrée/);
+test("demo labels sample routes as fictitious and discloses local-only storage", () => {
+  assert.match(html, /DÉMONSTRATION/);
+  assert.match(html, /Données fictives/);
+  assert.match(html, /Ces exemples sont fictifs/);
+  assert.match(js, /jotcolis-demo-trips-v1/);
+  assert.match(js, /Aucun trajet réel consulté/);
+  assert.match(js, /Aucun autre utilisateur ne le voit/);
 });
 
-test("search form has origin, destination and accessible feedback", () => {
+test("search and GP trip forms have accessible feedback", () => {
   assert.match(html, /id="origin"/);
   assert.match(html, /id="destination"/);
+  assert.match(html, /id="trip-form"/);
   assert.match(html, /aria-live="polite"/);
   assert.ok(js.includes('addEventListener("submit"'));
+});
+
+test("trip demo validates capacity and escapes user-provided city names", () => {
+  assert.match(js, /capacity < 1 \|\| capacity > 100/);
+  assert.match(js, /function escapeHtml/);
+  assert.match(js, /localStorage\.setItem/);
 });
 
 test("stylesheet includes keyboard focus and responsive layout", () => {
   assert.match(css, /:focus-visible/);
   assert.match(css, /@media/);
+  assert.match(css, /\.trip-results/);
 });
