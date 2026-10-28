@@ -31,6 +31,8 @@ JotColis est un projet de plateforme mobile-first mettant en relation expéditeu
 - [Cahier des charges fonctionnel](docs/CAHIER-DES-CHARGES.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
 - [Feuille de route](docs/ROADMAP.md)
+- [Parcours UX](docs/UX-PARCOURS.md)
+- [Identité visuelle](docs/IDENTITE-VISUELLE.md)
 
 ## Lancement envisagé
 Le corridor France–Sénégal est un pilote possible, sous réserve des validations juridiques, douanières, transport, paiement et opérationnelles. La conception doit prévoir l’international sans laisser croire que tous les corridors sont ouverts.
