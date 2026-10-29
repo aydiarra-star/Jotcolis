@@ -120,35 +120,24 @@ if (tripForm && tripFeedback) {
       tripForm.reset(); document.querySelector("#trip-capacity").value = "5"; renderTrips();
 
 
-// Navigation mobile : conserve un état actif lisible après chaque sélection.
+    } catch {
+      tripFeedback.textContent = "Impossible d’enregistrer ce trajet fictif dans ce navigateur. Vérifiez les autorisations de stockage puis réessayez.";
+    }
+  });
+}
+
+// Navigation mobile : chaque onglet pointe vers son espace réel.
 document.querySelectorAll(".mobile-bottom-nav a").forEach(function (link) {
   link.addEventListener("click", function () {
+    const target = document.querySelector(link.getAttribute("href"));
+    if (!target) return;
     document.querySelectorAll(".mobile-bottom-nav a").forEach(function (item) {
       item.removeAttribute("aria-current");
     });
     link.setAttribute("aria-current", "page");
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 });
-
-
-// Raccourcis des corridors internationaux : ils remplissent la recherche, sans inventer de disponibilités.
-document.querySelectorAll(".corridor-card").forEach(function (button) {
-  button.addEventListener("click", function () {
-    const origin = document.querySelector("#origin");
-    const destination = document.querySelector("#destination");
-    if (!origin || !destination) return;
-    origin.value = button.dataset.origin || "";
-    destination.value = button.dataset.destination || "Dakar";
-    document.querySelector("#search-form")?.scrollIntoView({behavior:"smooth",block:"center"});
-    origin.focus({preventScroll:true});
-    const feedback = document.querySelector("#search-feedback");
-    if (feedback) {
-      feedback.hidden = false;
-      feedback.textContent = "Itinéraire prérempli en mode démo. Les corridors internationaux sont en préparation ; aucune disponibilité réelle n’est consultée.";
-    }
-  });
-});
-
 
 // Authentification réelle Supabase. Aucun secret privilégié n'est chargé dans le navigateur.
 (function initJotColisAuth() {
