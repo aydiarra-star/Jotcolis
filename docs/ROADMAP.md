@@ -46,7 +46,8 @@
 - [ ] Alertes sur demandes compatibles.
 - [ ] Outils GP avancés.
 - [ ] Parrainage anti-fraude.
-- [x] Préparer les corridors France, Espagne, Italie, États-Unis et Émirats arabes unis ↔ Sénégal (inactifs tant que les validations ne sont pas acquises).\n- [ ] Activer chaque corridor après validation juridique, douanière et opérationnelle, puis étendre langues et devises.
+- [x] Préparer les corridors France, Espagne, Italie, États-Unis et Émirats arabes unis ↔ Sénégal (inactifs tant que les validations ne sont pas acquises).
+- [ ] Activer chaque corridor après validation juridique, douanière et opérationnelle, puis étendre langues et devises.
 
 ## Critères de passage
 Une phase passe à la suivante seulement si les tests prévus sont exécutés, aucun défaut critique ne reste ouvert, la documentation est mise à jour, les risques sont traités explicitement et les validations juridiques/opérationnelles nécessaires sont acquises.
