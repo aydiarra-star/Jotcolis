@@ -8,10 +8,10 @@
 - [ ] Ajouter conventions, sécurité, tests et CI adaptés.
 
 ## Phase 1 — Squelette applicatif
-- [ ] Application responsive et identité visuelle cohérente.
-- [ ] Pages publiques et navigation.
+- [x] Prototype responsive et identité visuelle cohérente.
+- [x] Pages publiques et navigation.
 - [ ] Configuration par environnement et contrôles de qualité.
-- [ ] Tests de base et démarrage reproductible.
+- [x] Tests de base et démarrage reproductible.
 
 ## Phase 2 — Flux cœur
 - [ ] Authentification et permissions.
@@ -46,7 +46,7 @@
 - [ ] Alertes sur demandes compatibles.
 - [ ] Outils GP avancés.
 - [ ] Parrainage anti-fraude.
-- [ ] Nouveaux corridors, langues et devises après validation individuelle.
+- [x] Préparer les corridors France, Espagne, Italie, États-Unis et Émirats arabes unis ↔ Sénégal (inactifs tant que les validations ne sont pas acquises).\n- [ ] Activer chaque corridor après validation juridique, douanière et opérationnelle, puis étendre langues et devises.
 
 ## Critères de passage
 Une phase passe à la suivante seulement si les tests prévus sont exécutés, aucun défaut critique ne reste ouvert, la documentation est mise à jour, les risques sont traités explicitement et les validations juridiques/opérationnelles nécessaires sont acquises.
