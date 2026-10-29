@@ -6,6 +6,8 @@
   <meta name="description" content="Prototype visuel de JotColis — recherche de trajets pour colis.">
   <title>JotColis — Votre colis voyage avec confiance</title>
   <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.min.js" defer></script>
+  <script src="./supabase-config.js" defer></script>
   <script src="./app.js" defer></script>
 </head>
 <body>
@@ -75,6 +77,31 @@
       <div class="trust-item"><span class="trust-icon" aria-hidden="true">✓</span><div><strong>Des étapes claires</strong><p>Chaque étape a son statut.</p></div></div>
       <div class="trust-item"><span class="trust-icon" aria-hidden="true">⌁</span><div><strong>Un suivi honnête</strong><p>Pas de fausse position GPS.</p></div></div>
       <div class="trust-item"><span class="trust-icon" aria-hidden="true">↗</span><div><strong>Des règles visibles</strong><p>Conditions avant confirmation.</p></div></div>
+    </section>
+
+    <section class="section account-section" id="compte" aria-labelledby="account-title">
+      <div class="account-heading">
+        <div><p class="eyebrow">Espace personnel</p><h2 id="account-title">Créez votre compte JotColis</h2><p>Inscription et connexion sécurisées. Le compte sera créé dans le service d’authentification JotColis.</p></div>
+        <span class="status-pill">Accès réel</span>
+      </div>
+      <div class="account-status" id="auth-status" role="status" aria-live="polite">Vérification de la connexion au service…</div>
+      <div class="auth-grid">
+        <form class="auth-card" id="signup-form">
+          <h3>Créer un compte</h3>
+          <label for="signup-name">Nom affiché</label><input id="signup-name" name="display_name" autocomplete="name" maxlength="80" required>
+          <label for="signup-email">Adresse e-mail</label><input id="signup-email" name="email" type="email" autocomplete="email" required>
+          <label for="signup-password">Mot de passe</label><input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+          <button class="button button-primary button-full" type="submit">Créer mon compte</button>
+        </form>
+        <form class="auth-card" id="signin-form">
+          <h3>J’ai déjà un compte</h3>
+          <label for="signin-email">Adresse e-mail</label><input id="signin-email" name="email" type="email" autocomplete="email" required>
+          <label for="signin-password">Mot de passe</label><input id="signin-password" name="password" type="password" autocomplete="current-password" required>
+          <button class="button button-primary button-full" type="submit">Me connecter</button>
+        </form>
+      </div>
+      <div class="account-session" id="account-session" hidden><span id="account-email"></span><button class="button button-secondary" id="signout-button" type="button">Me déconnecter</button></div>
+      <p class="account-note">Pour l’instant, le compte permet l’inscription et la connexion. La publication des trajets, les réservations et les paiements ne sont pas encore activés.</p>
     </section>
 
     <section class="section results-section" id="resultats" aria-labelledby="results-title">
