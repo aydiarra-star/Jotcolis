@@ -98,3 +98,101 @@ document.querySelectorAll(".corridor-card").forEach(function (button) {
     }
   });
 });
+
+
+// Authentification réelle Supabase. Aucun secret privilégié n'est chargé dans le navigateur.
+(function initJotColisAuth() {
+  const status = document.querySelector("#auth-status");
+  const signupForm = document.querySelector("#signup-form");
+  const signinForm = document.querySelector("#signin-form");
+  const sessionPanel = document.querySelector("#account-session");
+  const emailLabel = document.querySelector("#account-email");
+  const signoutButton = document.querySelector("#signout-button");
+  if (!status || !signupForm || !signinForm) return;
+
+  const config = window.JOTCOLIS_CONFIG;
+  if (!window.supabase || !config || !config.url || !config.publishableKey) {
+    status.textContent = "Le service de compte n’est pas disponible dans ce chargement. La démonstration reste accessible.";
+    signupForm.querySelector("button[type=submit]").disabled = true;
+    signinForm.querySelector("button[type=submit]").disabled = true;
+    return;
+  }
+
+  const client = window.supabase.createClient(config.url, config.publishableKey, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
+
+  function setAuthStatus(message) { status.textContent = message; }
+  function renderSession(session) {
+    const signedIn = Boolean(session && session.user);
+    sessionPanel.hidden = !signedIn;
+    signupForm.hidden = signedIn;
+    signinForm.hidden = signedIn;
+    if (signedIn && emailLabel) emailLabel.textContent = "Connecté : " + session.user.email;
+    if (signedIn) setAuthStatus("Connexion sécurisée active. Votre profil est associé à ce compte.");
+  }
+
+  signupForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    const button = signupForm.querySelector("button[type=submit]");
+    const displayName = document.querySelector("#signup-name").value.trim();
+    const email = document.querySelector("#signup-email").value.trim();
+    const password = document.querySelector("#signup-password").value;
+    if (!displayName || password.length < 8) {
+      setAuthStatus("Saisissez un nom et un mot de passe d’au moins huit caractères.");
+      return;
+    }
+    button.disabled = true;
+    setAuthStatus("Création du compte en cours…");
+    try {
+      const { data, error } = await client.auth.signUp({
+        email, password, options: { data: { display_name: displayName }, emailRedirectTo: window.location.origin + window.location.pathname }
+      });
+      if (error) throw error;
+      if (data.session) {
+        renderSession(data.session);
+      } else {
+        setAuthStatus("Demande d’inscription envoyée. Consultez votre e-mail pour confirmer le compte avant de vous connecter.");
+      }
+    } catch (error) {
+      setAuthStatus(error && error.message ? "Inscription impossible : " + error.message : "Inscription impossible. Réessayez plus tard.");
+    } finally { button.disabled = false; }
+  });
+
+  signinForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    const button = signinForm.querySelector("button[type=submit]");
+    const email = document.querySelector("#signin-email").value.trim();
+    const password = document.querySelector("#signin-password").value;
+    button.disabled = true;
+    setAuthStatus("Connexion en cours…");
+    try {
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      renderSession(data.session);
+    } catch (error) {
+      setAuthStatus(error && error.message ? "Connexion impossible : " + error.message : "Connexion impossible. Vérifiez vos identifiants.");
+    } finally { button.disabled = false; }
+  });
+
+  if (signoutButton) signoutButton.addEventListener("click", async function() {
+    signoutButton.disabled = true;
+    try {
+      const { error } = await client.auth.signOut();
+      if (error) throw error;
+      renderSession(null);
+      setAuthStatus("Vous êtes déconnecté.");
+    } catch (error) {
+      setAuthStatus(error && error.message ? "Déconnexion impossible : " + error.message : "Déconnexion impossible. Réessayez.");
+    } finally { signoutButton.disabled = false; }
+  });
+
+  client.auth.onAuthStateChange(function(_event, session) { renderSession(session); });
+  client.auth.getSession().then(function(result) {
+    if (result.error) throw result.error;
+    renderSession(result.data.session);
+    if (!result.data.session) setAuthStatus("Service de compte connecté. Vous pouvez créer un compte ou vous connecter.");
+  }).catch(function() {
+    setAuthStatus("Impossible de vérifier la session. Vérifiez votre connexion puis rechargez la page.");
+  });
+})();
