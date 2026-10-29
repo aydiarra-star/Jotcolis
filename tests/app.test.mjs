@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const js = await readFile(new URL("../app.js", import.meta.url), "utf8");
 const css = await readFile(new URL("../styles.css", import.meta.url), "utf8");
+const premiumCss = await readFile(new URL("../premium.css", import.meta.url), "utf8");
 const experienceCss = await readFile(new URL("../experience.css", import.meta.url), "utf8");
 const globeJs = await readFile(new URL("../journey-globe.js", import.meta.url), "utf8");
 const buildScript = await readFile(new URL("../scripts/build.mjs", import.meta.url), "utf8");
@@ -87,13 +88,54 @@ test("connected search queries only future published trips on active corridors",
 });
 
 
-test("premium identity restores the historical orange palette with motion and focus support", () => {
+test("identité orange restaurée : jetons de couleur relevés sur la référence visuelle", () => {
   assert.match(css, /--teal:#f47721/);
-  assert.match(experienceCss, /--jc-night: #fffaf6/);
-  assert.match(experienceCss, /--jc-gold: #f47721/);
+  assert.match(premiumCss, /--jc-orange:#f47721/);
+  assert.match(experienceCss, /--jc-ink: #242326/);
+  assert.match(experienceCss, /--jc-ink-soft: #555555/);
+  assert.match(experienceCss, /--jc-orange: #f47721/);
+  assert.match(experienceCss, /--jc-orange-accent: #df5d0b/);
+  assert.match(experienceCss, /--jc-orange-deep: #c65308/);
+  assert.match(experienceCss, /--jc-orange-active: #b94c08/);
+  assert.match(experienceCss, /--jc-cream: #fff0e3/);
+  assert.match(experienceCss, /--jc-paper: #fffaf6/);
+  assert.match(experienceCss, /--jc-line-soft: #eee7e1/);
+  assert.match(experienceCss, /--jc-black: #232225/);
+  assert.match(experienceCss, /--jc-logo-top: #fd9448/);
+  assert.match(experienceCss, /--jc-logo-bottom: #f67f2d/);
+  assert.match(experienceCss, /--jc-nav-from: #cc5a10/);
+  assert.match(experienceCss, /--jc-nav-to: #ec711d/);
   assert.match(experienceCss, /\.mobile-bottom-nav a \{[^}]*min-height: 48px/s);
   assert.match(experienceCss, /prefers-reduced-motion: reduce/);
   assert.match(experienceCss, /button:focus-visible/);
+});
+
+test("aucune couleur hors palette ne subsiste dans les feuilles de style", () => {
+  // Palette de la référence visuelle + seul jeton sémantique hors palette (erreurs), non affiché.
+  const autorisees = new Set([
+    "#232225", "#242326", "#555555", "#555",
+    "#f47721", "#df5d0b", "#c65308", "#b94c08", "#9a430d",
+    "#fff0e3", "#fff5ed", "#fffaf6", "#ffffff", "#fff",
+    "#eee7e1", "#fd9448", "#f67f2d", "#cc5a10", "#ec711d", "#f7e4d8",
+    "#a43e3e",
+  ]);
+  for (const [nom, source] of [
+    ["styles.css", css],
+    ["premium.css", premiumCss],
+    ["experience.css", experienceCss],
+  ]) {
+    const trouvees = source.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
+    const horsPalette = [...new Set(trouvees.filter((c) => !autorisees.has(c.toLowerCase())))];
+    assert.deepEqual(horsPalette, [], `${nom} contient des couleurs hors palette : ${horsPalette.join(", ")}`);
+  }
+});
+
+test("le bandeau de démonstration et la barre de navigation reprennent la référence", () => {
+  assert.match(experienceCss, /\.demo-banner \{[^}]*background: var\(--jc-black\)[^}]*color: var\(--jc-white-solid\)/s);
+  assert.match(experienceCss, /\.mobile-bottom-nav \{[^}]*linear-gradient\(100deg, var\(--jc-nav-from\) 0%, var\(--jc-nav-to\) 100%\)/s);
+  assert.match(experienceCss, /\.mobile-bottom-nav a \{[^}]*color: var\(--jc-nav-ink\)/s);
+  assert.match(experienceCss, /aria-current="page"\] \{ background: linear-gradient\(145deg, #ffffff, #ffffff\); color: var\(--jc-orange-active\)/);
+  assert.match(experienceCss, /--jc-nav-ink: #f7e4d8/);
 });
 
 
