@@ -42,7 +42,7 @@ Le schéma métier de base est installé sur le projet Supabase JotColis. Le fic
 2. [x] Préparer les corridors internationaux en base, désactivés par défaut.
 3. [ ] Tester et finaliser les politiques avec des comptes expéditeur/GP/destinataire distincts.
 4. [x] Connecter le frontend à Supabase Auth avec URL et clé publishable dans un fichier de configuration public. Ajouter l’URL de prévisualisation Render à la liste des redirections autorisées dans Supabase Auth avant de valider la confirmation d’e-mail en environnement hébergé.
-5. [~] Parcours d’inscription/connexion présents ; valider la confirmation e-mail et la redirection. La recherche lit les trajets futurs publiés uniquement sur les corridors actifs ; publication GP et réservations toujours désactivées.
+5. [~] Parcours d’inscription/connexion présents ; valider la confirmation e-mail et la redirection. Recherche des trajets publiés connectée. Brouillons de trajets enregistrés via RPC serveur ; publication réservée aux comptes GP approuvés et corridors actifs. Les corridors sont encore inactifs, la publication commerciale et les réservations restent bloquées.
 6. Ajouter demandes et réservations transactionnelles.
 7. Ajouter passeport et incidents.
 8. Ajouter les intégrations externes uniquement après choix et validations.
