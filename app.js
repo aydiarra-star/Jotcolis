@@ -121,6 +121,7 @@ document.querySelectorAll(".corridor-card").forEach(function (button) {
   const client = window.supabase.createClient(config.url, config.publishableKey, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
+  window.JOTCOLIS_SUPABASE = client;
 
   function setAuthStatus(message) { status.textContent = message; }
   function renderSession(session) {
@@ -195,4 +196,66 @@ document.querySelectorAll(".corridor-card").forEach(function (button) {
   }).catch(function() {
     setAuthStatus("Impossible de vérifier la session. Vérifiez votre connexion puis rechargez la page.");
   });
+})();
+
+
+// Recherche connectée : seules les offres publiées sur un corridor actif sont affichées.
+// Si le backend est configuré mais indisponible, ne jamais présenter les exemples fictifs comme réels.
+(function initPublishedTripSearch() {
+  const searchForm = document.querySelector("#search-form");
+  const feedback = document.querySelector("#search-feedback");
+  const results = document.querySelector("#trip-results");
+  if (!searchForm || !feedback || !results) return;
+
+  function renderPublishedTrips(trips) {
+    if (!trips.length) {
+      results.innerHTML = '<div class="trip-empty">Aucun trajet réel publié ne correspond à cette recherche. Les corridors restent fermés tant que leur validation opérationnelle n’est pas terminée.</div>';
+      return;
+    }
+    results.innerHTML = trips.map(function (trip) {
+      const date = trip.departure_at ? new Date(trip.departure_at).toLocaleDateString("fr-FR", {day:"numeric",month:"long",year:"numeric"}) : "Date à confirmer";
+      const capacity = Number(trip.capacity_remaining_kg);
+      const price = trip.price_per_kg == null ? "Prix à convenir" : Number(trip.price_per_kg).toLocaleString("fr-FR", {maximumFractionDigits:2}) + " " + escapeHtml(String(trip.currency || "EUR")) + "/kg";
+      return '<article class="trip-card"><span class="trip-demo-tag">Trajet publié</span><h3>' + escapeHtml(trip.origin_city) + ' <span aria-hidden="true">→</span> ' + escapeHtml(trip.destination_city) + '</h3><p class="trip-route">' + escapeHtml(date) + '</p><p class="trip-meta">Capacité disponible : ' + (Number.isFinite(capacity) ? capacity.toLocaleString("fr-FR") : "à confirmer") + ' kg</p><p class="trip-meta">' + price + '</p>' + (trip.conditions ? '<p class="trip-meta">' + escapeHtml(trip.conditions) + '</p>' : '') + '<p class="trip-meta">Offre réelle publiée · Réservation non activée</p></article>';
+    }).join("");
+  }
+
+  searchForm.addEventListener("submit", async function (event) {
+    const client = window.JOTCOLIS_SUPABASE;
+    if (!client) return; // Le gestionnaire de démonstration existant prend le relais.
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const origin = document.querySelector("#origin").value.trim();
+    const destination = document.querySelector("#destination").value.trim();
+    const date = document.querySelector("#travel-date").value;
+    const weight = document.querySelector("#weight").value;
+    const button = searchForm.querySelector('button[type="submit"]');
+    button.disabled = true;
+    feedback.hidden = false;
+    feedback.textContent = "Recherche des trajets réellement publiés…";
+    try {
+      let query = client.from("trips")
+        .select("id, origin_city, destination_city, departure_at, capacity_remaining_kg, price_per_kg, currency, conditions, corridors!inner(is_active)")
+        .eq("status", "published")
+        .eq("corridors.is_active", true)
+        .ilike("origin_city", "%" + origin + "%")
+        .ilike("destination_city", "%" + destination + "%")
+        .gte("departure_at", new Date().toISOString())
+        .order("departure_at", {ascending:true})
+        .limit(30);
+      if (date) query = query.gte("departure_at", new Date(date + "T00:00:00").toISOString());
+      if (weight !== "any") query = query.gte("capacity_remaining_kg", Number(weight));
+      const {data, error} = await query;
+      if (error) throw error;
+      const trips = Array.isArray(data) ? data : [];
+      feedback.textContent = trips.length + " trajet(s) réel(s) publié(s) trouvé(s). Aucune réservation n’a été créée.";
+      renderPublishedTrips(trips);
+    } catch (error) {
+      feedback.textContent = "Recherche indisponible : impossible de vérifier les trajets réels. Aucun exemple fictif n’est présenté comme une offre réelle.";
+      results.innerHTML = '<div class="trip-empty">Le service de recherche est momentanément indisponible. Réessayez plus tard.</div>';
+    } finally {
+      button.disabled = false;
+    }
+    document.querySelector("#resultats")?.scrollIntoView({behavior:"smooth",block:"start"});
+  }, true);
 })();
