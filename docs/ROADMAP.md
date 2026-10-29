@@ -4,17 +4,17 @@
 - [x] Documenter la vision et le prompt maître.
 - [x] Rédiger le cahier des charges fonctionnel préliminaire.
 - [x] Décrire l’architecture cible sans imposer prématurément une pile.
-- [ ] Inspecter le dépôt et choisir la pile technique avec décision documentée.
+- [x] Inspecter le dépôt et choisir une pile légère pour le prototype statique.
 - [ ] Ajouter conventions, sécurité, tests et CI adaptés.
 
 ## Phase 1 — Squelette applicatif
 - [x] Prototype responsive et identité visuelle cohérente.
 - [x] Pages publiques et navigation.
-- [ ] Configuration par environnement et contrôles de qualité.
+- [x] Configuration publique Supabase séparée du code applicatif (clé publishable uniquement).\n- [ ] Séparer les paramètres par environnement et compléter les contrôles de qualité.
 - [x] Tests de base et démarrage reproductible.
 
 ## Phase 2 — Flux cœur
-- [ ] Authentification et permissions.
+- [x] Première tranche d’authentification e-mail/mot de passe via Supabase (confirmation e-mail et URL de redirection à valider en configuration).\n- [ ] Revue complète des permissions et tests d’accès croisé.
 - [ ] Profils GP et trajets.
 - [ ] Recherche et demandes de colis.
 - [ ] Réservation et capacité transactionnelle.
