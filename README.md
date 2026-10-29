@@ -4,7 +4,7 @@
 
 JotColis est un projet de plateforme mobile-first mettant en relation expéditeurs, voyageurs transporteurs (GP) et destinataires. L’objectif est de faciliter la recherche de trajets, d’améliorer la traçabilité et d’organiser la gestion des incidents.
 
-> **État : prototype frontend exécutable en cours.** Le point d’entrée racine est une prévisualisation statique interactive ; la recherche reste une démonstration et aucune réservation, authentification, base de données, géolocalisation ou paiement réel n’est activé. Aucune intégration ou validation juridique ne doit être annoncée comme réalisée sans preuve.
+> **État : prototype frontend et fondations de données en place.** La prévisualisation reste statique : recherche, trajets et passeport sont des démonstrations locales fictives. Un projet Supabase JotColis distinct a été créé et le schéma initial installé avec RLS activée, mais le frontend n’est pas encore connecté à l’authentification ni aux données réelles. Aucune réservation, géolocalisation ou transaction réelle n’est activée.
 
 ## Principes
 - Confiance vérifiable : identité, voyage et fiabilité sont des statuts distincts.
@@ -46,7 +46,7 @@ Le site statique généré se trouve dans `dist/`. Un Blueprint Render est fourn
 - [Cahier des charges fonctionnel](docs/CAHIER-DES-CHARGES.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
 - [Plan backend MVP et sécurité](docs/PLAN-BACKEND-MVP.md)
-- [Brouillon de migration Supabase — non exécuté](supabase/migrations/202610280001_initial_schema_draft.sql)
+- [Référence SQL du schéma initial Supabase](supabase/migrations/202610280001_initial_schema_draft.sql) — à rapprocher de l’historique distant avant de la considérer comme migration canonique.
 - [Feuille de route](docs/ROADMAP.md)
 - [Parcours UX](docs/UX-PARCOURS.md)
 - [Identité visuelle](docs/IDENTITE-VISUELLE.md)
