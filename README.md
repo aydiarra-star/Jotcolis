@@ -57,3 +57,8 @@ Le corridor France–Sénégal est un pilote possible, sous réserve des validat
 
 ## Contribution
 Travailler dans une branche dédiée, ouvrir une pull request, préserver le travail existant, ajouter les tests pertinents et documenter les risques. Ne jamais commiter de secrets ou de données personnelles réelles.
+
+
+## Authentification du prototype
+
+Le formulaire d’inscription et de connexion utilise Supabase Auth via une clé publishable destinée au navigateur. Les profils sont créés par le déclencheur de base de données existant. Aucun secret service-role n’est embarqué dans le frontend. La recherche de trajets et les réservations restent en mode démonstration jusqu’à la mise en place des flux serveur sécurisés.
