@@ -8,8 +8,15 @@ document.addEventListener("click", function (event) {
   const destination = document.getElementById("destination");
   if (!origin || !destination) return;
   const oldOrigin = origin.value;
-  origin.value = destination.value;
+  const oldDestination = destination.value;
+  origin.value = oldDestination;
   destination.value = oldOrigin;
+  const originLabel = document.querySelector('label[for="origin"]');
+  const destinationLabel = document.querySelector('label[for="destination"]');
+  if (originLabel) originLabel.textContent = "Départ";
+  if (destinationLabel) destinationLabel.textContent = "Arrivée";
+  origin.setAttribute("aria-label", "Ville de départ");
+  destination.setAttribute("aria-label", "Ville d’arrivée");
   origin.dispatchEvent(new Event("input", { bubbles: true }));
   origin.dispatchEvent(new Event("change", { bubbles: true }));
   destination.dispatchEvent(new Event("input", { bubbles: true }));
