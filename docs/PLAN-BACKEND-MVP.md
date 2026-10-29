@@ -1,6 +1,6 @@
 # JotColis — Plan d’implémentation du backend MVP
 
-Statut au 29 octobre 2026 : projet Supabase JotColis distinct créé et schéma métier de base installé. Le frontend statique n’est pas encore connecté à l’authentification ni aux données réelles. Aucune réservation, livraison ou transaction réelle n’est activée.
+Statut au 29 octobre 2026 : projet Supabase JotColis distinct créé et schéma métier de base installé. Le frontend statique est désormais connecté à Supabase Auth pour l’inscription, la connexion et la déconnexion, avec une clé publishable côté navigateur. Les flux de données métier, la publication de trajets, les réservations, les livraisons et les transactions réelles ne sont pas encore activés.
 
 ## Décision de séparation des environnements
 
@@ -40,9 +40,9 @@ Le schéma métier de base est installé sur le projet Supabase JotColis. Le fic
 
 1. [x] Créer le projet Supabase JotColis distinct et installer le schéma métier de base.
 2. [x] Préparer les corridors internationaux en base, désactivés par défaut.
-3. Tester et finaliser les politiques avec des comptes expéditeur/GP/destinataire distincts.
-4. Connecter le frontend avec l’URL et la clé publishable par variables d’environnement.
-5. Implémenter comptes et profils, puis publication/recherche de trajets.
+3. [ ] Tester et finaliser les politiques avec des comptes expéditeur/GP/destinataire distincts.
+4. [x] Connecter le frontend à Supabase Auth avec URL et clé publishable dans un fichier de configuration public.
+5. [~] Ajouter les parcours d’inscription/connexion ; valider la confirmation e-mail et la redirection, puis implémenter publication/recherche de trajets.
 6. Ajouter demandes et réservations transactionnelles.
 7. Ajouter passeport et incidents.
 8. Ajouter les intégrations externes uniquement après choix et validations.
