@@ -47,3 +47,37 @@ test("public table grants use least privilege and keep GP approval operator-cont
   assert.match(grants, /revoke all on functions from anon, authenticated/i);
   assert.doesNotMatch(grants, /grant (?:insert|update|delete|truncate) on table public\.trips to (?:anon|authenticated)/i);
 });
+
+test("passport event reports derive identity and timestamp from the server", async () => {
+  const passport = await readFile(
+    new URL("../supabase/migrations/202610290005_secure_passport_event_reporting.sql", import.meta.url),
+    "utf8"
+  );
+  assert.match(passport, /v_user_id uuid := auth\.uid\(\)/i);
+  assert.match(passport, /p_event_type,[\s\S]*now\(\),[\s\S]*v_user_id,[\s\S]*'user'/i);
+  assert.doesNotMatch(passport, /p_actor_id|p_occurred_at|p_source/i);
+});
+
+test("only approved active GPs can report milestones on their own bookings", async () => {
+  const passport = await readFile(
+    new URL("../supabase/migrations/202610290005_secure_passport_event_reporting.sql", import.meta.url),
+    "utf8"
+  );
+  assert.match(passport, /p\.status = 'active'[\s\S]*p\.gp_approved = true/i);
+  assert.match(passport, /b\.gp_id = v_user_id[\s\S]*for update/i);
+  assert.match(passport, /OWN_BOOKING_NOT_FOUND/);
+});
+
+test("user reports are limited to non-final milestones and valid booking states", async () => {
+  const passport = await readFile(
+    new URL("../supabase/migrations/202610290005_secure_passport_event_reporting.sql", import.meta.url),
+    "utf8"
+  );
+  assert.match(passport, /EVENT_TYPE_NOT_USER_REPORTABLE/);
+  assert.match(passport, /BOOKING_NOT_CONFIRMED/);
+  assert.match(passport, /BOOKING_NOT_IN_TRANSIT/);
+  assert.match(passport, /visible_to_sender,[\s\S]*visible_to_gp,[\s\S]*visible_to_recipient[\s\S]*true,[\s\S]*true,[\s\S]*false/i);
+  assert.doesNotMatch(passport, /update public\.bookings/i);
+  assert.match(passport, /revoke all on function public\.report_passport_event\(uuid, public\.passport_event_type, text\) from public, anon/i);
+  assert.match(passport, /grant execute on function public\.report_passport_event\(uuid, public\.passport_event_type, text\) to authenticated/i);
+});
