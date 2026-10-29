@@ -92,3 +92,11 @@ test("brand system stays orange, black and white with accessible mobile motion a
   assert.match(css, /prefers-reduced-motion:reduce/);
   assert.match(css, /button:focus-visible/);
 });
+
+
+test("landing copy avoids promising unavailable booking or fabricated inventory", () => {
+  assert.match(html, /Aucune fausse disponibilité/);
+  assert.match(html, /Statuts et limites visibles/);
+  assert.match(html, /Les réservations restent désactivées/);
+  assert.doesNotMatch(html, /Prix expliqué avant confirmation/);
+});
