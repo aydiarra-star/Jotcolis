@@ -124,3 +124,36 @@ Pour chaque écran : chargement, vide, erreur, accès refusé, hors ligne, actio
 
 ## 12. Prototype et validation
 Le prototype doit être testé sur téléphone et ordinateur avec des utilisateurs représentant les trois rôles. Vérifier qu’ils comprennent la différence entre une demande, une réservation acceptée, un paiement confirmé, l’arrivée et la remise. Noter les incompréhensions avant d’ajouter des fonctions secondaires.
+
+## 13. Inscription et accès — conception MVP
+
+### Principes
+- Un compte peut envoyer des colis et publier des trajets ; ne pas enfermer un utilisateur dans un rôle irréversible.
+- Les privilèges support et administration sont attribués uniquement côté serveur, jamais depuis un champ libre du profil.
+- Le destinataire reçoit uniquement les informations nécessaires à la remise. Un accès limité par invitation/code à durée limitée pourra être étudié ; aucun accès public à un colis par simple identifiant.
+- Le téléphone, les coordonnées du destinataire et les preuves ne sont jamais affichés sur un profil public.
+- Les niveaux « identité vérifiée », « trajet/document vérifié » et « fiabilité basée sur des livraisons terminées » restent distincts.
+
+### Parcours
+1. L’utilisateur choisit « Créer un compte » ou « Se connecter ».
+2. Inscription par e-mail et mot de passe ; confirmation d’adresse avant les actions sensibles. La connexion sociale ou par SMS est hors périmètre initial tant que coût et besoin ne sont pas validés.
+3. Il renseigne un nom d’affichage ; téléphone et pays sont facultatifs au premier écran, demandés seulement quand une étape métier l’exige.
+4. Il arrive sur un tableau de bord avec deux actions possibles : « Envoyer un colis » et « Publier un trajet ».
+5. Les actions sensibles affichent une explication de confidentialité et les conditions avant validation.
+6. Déconnexion, récupération de compte et gestion des sessions sont accessibles depuis le profil.
+
+### États et messages
+- E-mail à confirmer : « Vérifiez votre boîte de réception pour activer votre compte. »
+- Connexion échouée : message générique qui ne révèle pas si une adresse est inscrite.
+- Compte suspendu : accès aux fonctions bloqué, avec indication de la voie de contact du support.
+- Session expirée : sauvegarder les champs non sensibles lorsque c’est sûr, puis demander une reconnexion.
+- Compte supprimé/fermé : expliquer les conséquences et la conservation éventuelle de données imposée par les obligations applicables.
+
+### Critères d’acceptation avant activation
+- Un utilisateur non connecté ne peut ni créer une demande ni publier un trajet réel.
+- Un compte ne peut lire ou modifier que ses données autorisées ; les tests incluent deux comptes distincts et un utilisateur non connecté.
+- Un destinataire ne peut accéder qu’à la réservation qui lui est explicitement partagée.
+- Les rôles privilégiés sont vérifiés côté serveur et audités.
+- Les erreurs d’authentification n’exposent ni données personnelles ni détails techniques.
+- Les formulaires fonctionnent au clavier et sur petit écran ; les messages d’erreur sont associés aux champs.
+- Aucun secret serveur n’est livré au navigateur.
