@@ -34,3 +34,16 @@ test("RPC functions do not expose internal corridor validation notes", () => {
   assert.doesNotMatch(migration, /validation_notes text/);
   assert.match(migration, /revoke all on function public\.create_trip_draft/);
 });
+
+
+test("public table grants use least privilege and keep GP approval operator-controlled", async () => {
+  const grants = await readFile(
+    new URL("../supabase/migrations/202610290004_harden_public_table_grants.sql", import.meta.url),
+    "utf8"
+  );
+  assert.match(grants, /revoke all privileges on all tables in schema public from anon, authenticated/i);
+  assert.match(grants, /grant select on table public\.corridors, public\.trips to anon/i);
+  assert.match(grants, /grant update \(display_name, phone, country_code\)[\s\S]*to authenticated/i);
+  assert.match(grants, /revoke all on functions from anon, authenticated/i);
+  assert.doesNotMatch(grants, /grant (?:insert|update|delete|truncate) on table public\.trips to (?:anon|authenticated)/i);
+});
