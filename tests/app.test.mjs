@@ -62,3 +62,11 @@ test("Supabase account flows use only a publishable browser key and expose clear
   assert.match(js, /publishableKey/);
   assert.match(js, /publication des trajets, les réservations et les paiements ne sont pas encore activés/);
 });
+
+
+test("browser Supabase configuration is public-only and auth forms can be hidden after login", async () => {
+  const config = await readFile(new URL("../supabase-config.js", import.meta.url), "utf8");
+  assert.match(config, /sb_publishable_/);
+  assert.doesNotMatch(config, /service_role|secret_key/i);
+  assert.match(css, /\.auth-card\[hidden\].*display:none!important/);
+});
