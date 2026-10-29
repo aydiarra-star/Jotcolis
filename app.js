@@ -1,3 +1,26 @@
+
+// Permet de rechercher dans les deux sens : Paris → Dakar ou Dakar → Paris.
+(function initDirectionSwitch() {
+  const origin = document.querySelector("#origin");
+  const destination = document.querySelector("#destination");
+  const button = document.querySelector("#swap-direction");
+  if (!origin || !destination || !button) return;
+  button.addEventListener("click", function () {
+    const currentOrigin = origin.value;
+    origin.value = destination.value;
+    destination.value = currentOrigin;
+    const originLabel = document.querySelector('label[for="origin"]');
+    const destinationLabel = document.querySelector('label[for="destination"]');
+    if (originLabel) originLabel.textContent = "Départ";
+    if (destinationLabel) destinationLabel.textContent = "Destination";
+    origin.dispatchEvent(new Event("input", { bubbles: true }));
+    destination.dispatchEvent(new Event("input", { bubbles: true }));
+    button.classList.add("is-swapped");
+    button.setAttribute("aria-label", "Sens inversé. Inverser à nouveau le trajet");
+    button.title = "Sens inversé — appuyez pour revenir au sens précédent";
+  });
+})();
+
 const DEMO_STORAGE_KEY = "jotcolis-demo-trips-v1";
 const form = document.querySelector("#search-form");
 const feedback = document.querySelector("#search-feedback");
