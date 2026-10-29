@@ -16,7 +16,7 @@
 ## Phase 2 — Flux cœur
 - [x] Première tranche d’authentification e-mail/mot de passe via Supabase (confirmation e-mail et URL de redirection à valider en configuration).\n- [ ] Revue complète des permissions et tests d’accès croisé.
 - [ ] Profils GP et trajets.
-- [ ] Recherche et demandes de colis.
+- [~] Recherche réelle des trajets futurs publiée sur corridors actifs ; aucun corridor n’est activé et aucun trajet réel n’est actuellement affiché. Demandes de colis non activées.
 - [ ] Réservation et capacité transactionnelle.
 - [ ] États et historique.
 
