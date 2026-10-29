@@ -18,7 +18,7 @@ test("trip drafts require an authenticated active account and validate future da
   assert.match(migration, /ACCOUNT_NOT_ACTIVE/);
   assert.match(migration, /DEPARTURE_MUST_BE_FUTURE/);
   assert.match(migration, /INVALID_CAPACITY/);
-  assert.match(migration, /status\) values[\s\S]*'draft'/);
+  assert.match(migration, /conditions, status[\s\S]*'draft'/);
 });
 
 test("publication requires an approved GP and active corridor and locks the owned draft", () => {
