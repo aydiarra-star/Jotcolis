@@ -79,3 +79,22 @@ document.querySelectorAll(".mobile-bottom-nav a").forEach(function (link) {
     link.setAttribute("aria-current", "page");
   });
 });
+
+
+// Raccourcis des corridors internationaux : ils remplissent la recherche, sans inventer de disponibilités.
+document.querySelectorAll(".corridor-card").forEach(function (button) {
+  button.addEventListener("click", function () {
+    const origin = document.querySelector("#origin");
+    const destination = document.querySelector("#destination");
+    if (!origin || !destination) return;
+    origin.value = button.dataset.origin || "";
+    destination.value = button.dataset.destination || "Dakar";
+    document.querySelector("#search-form")?.scrollIntoView({behavior:"smooth",block:"center"});
+    origin.focus({preventScroll:true});
+    const feedback = document.querySelector("#search-feedback");
+    if (feedback) {
+      feedback.hidden = false;
+      feedback.textContent = "Itinéraire prérempli en mode démo. Les corridors internationaux sont en préparation ; aucune disponibilité réelle n’est consultée.";
+    }
+  });
+});
