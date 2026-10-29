@@ -284,3 +284,22 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 .corridor-arrow{color:var(--teal);font-size:20px}
 .corridors-note{margin:17px 0 0;color:var(--muted);font-size:11px;line-height:1.7;max-width:850px}
 @media(max-width:700px){.corridors-heading{gap:12px;flex-direction:column}.corridor-grid{grid-template-columns:1fr}.corridor-card{padding:14px}.corridor-card strong{font-size:12px}}
+
+
+/* Authentification JotColis — formulaires simples, accessibles et responsives */
+.account-section{background:#fff}
+.account-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:20px}
+.account-heading h2{font-size:clamp(27px,3.5vw,40px);line-height:1.12;letter-spacing:-.045em;margin:0 0 12px}
+.account-heading p:not(.eyebrow){max-width:690px;color:var(--muted);font-size:13px;line-height:1.7}
+.account-status{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#f8fafc;color:var(--ink);font-size:12px;line-height:1.6;margin-bottom:16px}
+.auth-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.auth-card{display:flex;flex-direction:column;gap:9px;padding:22px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.auth-card h3{margin:0 0 7px;font-size:16px}
+.auth-card label{font-size:12px;font-weight:600;color:var(--ink)}
+.auth-card input{width:100%;min-height:43px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:13px;color:var(--ink);background:#fff}
+.auth-card input:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.auth-card button{margin-top:8px}
+.account-session{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border:1px solid var(--line);border-radius:12px}
+.account-session span{font-size:13px;overflow-wrap:anywhere}
+.account-note{margin-top:15px;color:var(--muted);font-size:11px;line-height:1.7}
+@media(max-width:700px){.account-heading{flex-direction:column;gap:10px}.auth-grid{grid-template-columns:1fr}.auth-card{padding:17px}.account-session{align-items:flex-start;flex-direction:column}}
