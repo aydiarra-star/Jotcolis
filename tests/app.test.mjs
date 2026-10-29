@@ -39,3 +39,13 @@ test("stylesheet includes keyboard focus and responsive layout", () => {
   assert.match(css, /@media/);
   assert.match(css, /\.trip-results/);
 });
+
+
+test("international corridor shortcuts cover Spain, Italy, the United States and the UAE", () => {
+  assert.match(html, /Espagne → Sénégal/);
+  assert.match(html, /Italie → Sénégal/);
+  assert.match(html, /États-Unis → Sénégal/);
+  assert.match(html, /Émirats arabes unis → Sénégal/);
+  assert.match(js, /\.corridor-card/);
+  assert.match(js, /aucune disponibilité réelle n’est consultée/i);
+});
