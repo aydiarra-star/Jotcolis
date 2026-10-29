@@ -67,5 +67,13 @@ Les couleurs ne doivent jamais être le seul moyen de distinguer un état. Ajout
 - Ne pas dépendre du survol pour expliquer une information essentielle.
 - Respecter la préférence de réduction des animations lorsque des animations seront ajoutées.
 
+## Déclinaison premium — corridor Dakar–Paris
+La prévisualisation applique une direction « grand voyage » en bleu nuit, or et laiton, sans modifier les parcours de recherche, de compte, de publication brouillon, de corridors ni de passeport déjà présents.
+
+- Les pictogrammes importants (itinéraire, colis, recherche, confiance et avion) sont des SVG dégradés avec relief, lisibles à toutes les tailles.
+- Le globe de l’accueil utilise une projection sphérique Canvas, que l’on peut faire pivoter au doigt ou à la souris ; des commandes permettent aussi de le tourner et de le recentrer.
+- L’avion alterne entre Paris et Dakar avec de courtes escales. Cette animation est décorative, explicitement signalée comme démonstration et ne représente ni un vol réel ni une position GPS.
+- La mise en page conserve les formulaires et navigations existants, s’adapte aux écrans étroits et respecte `prefers-reduced-motion`.
+
 ## À valider
 Tester la palette et les textes avec de vrais utilisateurs ; vérifier les contrastes ; tester la compréhension de la différence entre trajet, demande, réservation, arrivée et livraison.
