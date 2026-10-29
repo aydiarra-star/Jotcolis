@@ -1,3 +1,31 @@
+// Expansion internationale : un clic sur un corridor prépare le formulaire sans inventer de disponibilité.
+document.addEventListener("click", function (event) {
+  const card = event.target.closest(".corridor-card");
+  if (!card) return;
+  const origin = document.getElementById("origin");
+  const destination = document.getElementById("destination");
+  const form = document.getElementById("search-form");
+  const feedback = document.getElementById("search-feedback");
+  if (!origin || !destination || !form) return;
+  event.preventDefault();
+  origin.value = card.dataset.origin || "";
+  destination.value = card.dataset.destination || "";
+  origin.dispatchEvent(new Event("input", { bubbles: true }));
+  origin.dispatchEvent(new Event("change", { bubbles: true }));
+  destination.dispatchEvent(new Event("input", { bubbles: true }));
+  destination.dispatchEvent(new Event("change", { bubbles: true }));
+  const originLabel = document.querySelector('label[for="origin"]');
+  const destinationLabel = document.querySelector('label[for="destination"]');
+  if (originLabel) originLabel.textContent = "Départ";
+  if (destinationLabel) destinationLabel.textContent = "Arrivée";
+  if (feedback) {
+    feedback.hidden = false;
+    feedback.textContent = "Itinéraire prérempli. Appuyez sur « Rechercher un trajet » pour continuer. Les disponibilités réelles ne sont affichées que sur les corridors validés et actifs.";
+  }
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+  origin.focus({ preventScroll: true });
+}, true);
+
 // Permutation robuste du sens de recherche, déléguée au document pour résister aux réinitialisations du formulaire.
 document.addEventListener("click", function (event) {
   const button = event.target.closest("#swap-direction");
