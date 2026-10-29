@@ -126,9 +126,9 @@ input::placeholder{color:#93a4bd}
 .trip-demo-tag{display:inline-block;font-size:9px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;background:var(--mint);color:var(--teal-dark);padding:5px 8px;border-radius:99px;margin-bottom:12px}
 .trip-empty{grid-column:1/-1;border:1px dashed #b7c9c0;border-radius:16px;padding:22px;color:var(--muted);font-size:13px}
 .trip-form{margin-top:22px;max-width:520px}.form-kicker{font-size:12px;font-weight:850;color:#e0eee6;margin:0 0 12px}
-.trip-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.trip-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.trip-form-wide{grid-column:1/-1}
 .trip-form label{display:block;color:#d6e4df;font-size:10px;font-weight:800;margin:0 0 5px}
-.trip-form input{width:100%;min-width:0;background:#ffffff;color:var(--ink);border:1px solid #d9e4de;border-radius:10px;padding:10px 11px;font-size:12px}
+.trip-form input,.trip-form select{width:100%;min-width:0;background:#ffffff;color:var(--ink);border:1px solid #d9e4de;border-radius:10px;padding:10px 11px;font-size:12px}
 .trip-form .button{margin-top:13px;border:0;cursor:pointer}.trip-feedback{font-size:10px;color:#c2d5f4;line-height:1.6;margin:10px 0 0}
 @media(max-width:700px){.results-section{padding-top:40px;padding-bottom:42px}.results-heading{align-items:flex-start;flex-direction:column;gap:12px}.trip-results{grid-template-columns:1fr}.trip-form-grid{grid-template-columns:1fr 1fr}}
 
