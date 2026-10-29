@@ -49,3 +49,16 @@ test("international corridor shortcuts cover Spain, Italy, the United States and
   assert.match(js, /\.corridor-card/);
   assert.match(js, /aucune disponibilité réelle n’est consultée/i);
 });
+
+
+test("Supabase account flows use only a publishable browser key and expose clear session UI", () => {
+  assert.match(html, /id="signup-form"/);
+  assert.match(html, /id="signin-form"/);
+  assert.match(html, /id="signout-button"/);
+  assert.match(html, /supabase-config\.js/);
+  assert.match(js, /signUp\(/);
+  assert.match(js, /signInWithPassword\(/);
+  assert.match(js, /auth\.signOut\(/);
+  assert.match(js, /publishableKey/);
+  assert.match(js, /publication des trajets, les réservations et les paiements ne sont pas encore activés/);
+});
