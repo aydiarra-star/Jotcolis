@@ -181,12 +181,12 @@
     for (let latitude = -60; latitude <= 60; latitude += 30) {
       const points = [];
       for (let longitude = -180; longitude <= 180; longitude += 3) points.push({ longitude, latitude });
-      strokeVisibleLine(points, latitude === 0 ? "rgba(146, 182, 197, .21)" : "rgba(134, 174, 192, .14)", latitude === 0 ? .8 : .55);
+      strokeVisibleLine(points, latitude === 0 ? "rgba(255, 223, 189, .21)" : "rgba(255, 223, 189, .14)", latitude === 0 ? .8 : .55);
     }
     for (let longitude = -180; longitude < 180; longitude += 30) {
       const points = [];
       for (let latitude = -87; latitude <= 87; latitude += 3) points.push({ longitude, latitude });
-      strokeVisibleLine(points, "rgba(134, 174, 192, .13)", .55);
+      strokeVisibleLine(points, "rgba(255, 223, 189, .13)", .55);
     }
   }
 
@@ -201,9 +201,9 @@
     }
     context.save();
     context.beginPath();
-    context.strokeStyle = "rgba(231, 194, 116, .48)";
+    context.strokeStyle = "rgba(244, 119, 33, .48)";
     context.lineWidth = .9;
-    context.shadowColor = "rgba(213, 179, 107, .25)";
+    context.shadowColor = "rgba(244, 119, 33, .25)";
     context.shadowBlur = 4;
     let drawing = false;
     for (const point of projected) {
@@ -224,9 +224,9 @@
     const landGradient = context.createLinearGradient(
       state.width * .22, state.height * .2, state.width * .77, state.height * .82
     );
-    landGradient.addColorStop(0, "rgba(219, 190, 127, .52)");
-    landGradient.addColorStop(.48, "rgba(160, 145, 106, .44)");
-    landGradient.addColorStop(1, "rgba(75, 123, 139, .42)");
+    landGradient.addColorStop(0, "rgba(255, 154, 82, .52)");
+    landGradient.addColorStop(.48, "rgba(244, 119, 33, .44)");
+    landGradient.addColorStop(1, "rgba(198, 83, 8, .42)");
     context.fillStyle = landGradient;
     for (const polygon of LAND_POLYGONS) tracePolygon(polygon, true);
 
@@ -246,8 +246,8 @@
   }
 
   function drawRoute(flight) {
-    strokeVisibleLine(route, "rgba(235, 190, 103, .2)", 3.4, 8);
-    strokeVisibleLine(route, "rgba(245, 211, 137, .78)", 1.25, 5);
+    strokeVisibleLine(route, "rgba(244, 119, 33, .2)", 3.4, 8);
+    strokeVisibleLine(route, "rgba(255, 154, 82, .78)", 1.25, 5);
 
     const position = greatCirclePoint(PARIS, DAKAR, flight.routeAmount);
     const point = project(position.longitude, position.latitude);
@@ -263,7 +263,7 @@
     context.save();
     context.translate(point.x, point.y);
     context.rotate(angle);
-    context.shadowColor = "rgba(255, 210, 112, .95)";
+    context.shadowColor = "rgba(255, 154, 82, .95)";
     context.shadowBlur = 16;
     const metal = context.createLinearGradient(-13, -7, 13, 7);
     metal.addColorStop(0, "#fff0e3");
@@ -293,8 +293,8 @@
     context.save();
     context.beginPath();
     context.arc(point.x, point.y, 3.3, 0, Math.PI * 2);
-    context.fillStyle = "rgba(255, 229, 162, .86)";
-    context.shadowColor = "rgba(255, 198, 94, .9)";
+    context.fillStyle = "rgba(255, 223, 189, .86)";
+    context.shadowColor = "rgba(244, 119, 33, .9)";
     context.shadowBlur = 13;
     context.fill();
     context.restore();
@@ -352,9 +352,9 @@
     context.save();
     context.beginPath();
     context.arc(cx, cy, radius + 1.5, 0, Math.PI * 2);
-    context.strokeStyle = "rgba(137, 202, 214, .62)";
+    context.strokeStyle = "rgba(255, 154, 82, .62)";
     context.lineWidth = 1.1;
-    context.shadowColor = "rgba(60, 185, 213, .35)";
+    context.shadowColor = "rgba(244, 119, 33, .35)";
     context.shadowBlur = 14;
     context.stroke();
     context.restore();
@@ -373,9 +373,9 @@
     context.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
 
     const surfaceLight = context.createRadialGradient(cx - radius * .34, cy - radius * .38, radius * .04, cx, cy, radius * 1.06);
-    surfaceLight.addColorStop(0, "rgba(127, 203, 217, .13)");
-    surfaceLight.addColorStop(.58, "rgba(74, 139, 164, .045)");
-    surfaceLight.addColorStop(1, "rgba(0, 4, 12, .69)");
+    surfaceLight.addColorStop(0, "rgba(255, 223, 189, .13)");
+    surfaceLight.addColorStop(.58, "rgba(255, 223, 189, .045)");
+    surfaceLight.addColorStop(1, "rgba(255, 240, 227, .69)");
     context.fillStyle = surfaceLight;
     context.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
 
@@ -390,15 +390,15 @@
     context.save();
     const rim = context.createRadialGradient(cx - radius * .33, cy - radius * .36, radius * .67, cx, cy, radius * 1.02);
     rim.addColorStop(0, "rgba(0, 0, 0, 0)");
-    rim.addColorStop(.83, "rgba(1, 7, 14, .08)");
-    rim.addColorStop(1, "rgba(108, 195, 213, .17)");
+    rim.addColorStop(.83, "rgba(255, 240, 227, .08)");
+    rim.addColorStop(1, "rgba(244, 119, 33, .17)");
     context.beginPath();
     context.arc(cx, cy, radius, 0, Math.PI * 2);
     context.fillStyle = rim;
     context.fill();
     context.beginPath();
     context.arc(cx, cy, radius - .4, 0, Math.PI * 2);
-    context.strokeStyle = "rgba(184, 221, 222, .22)";
+    context.strokeStyle = "rgba(255, 223, 189, .22)";
     context.lineWidth = .65;
     context.stroke();
     context.restore();
