@@ -1,10 +1,10 @@
 # JotColis — Plan d’implémentation du backend MVP
 
-Statut : préparation technique, non connecté à une base de données. Ce document ne constitue pas une autorisation de créer un service payant ni d’activer des livraisons réelles.
+Statut au 29 octobre 2026 : projet Supabase JotColis distinct créé et schéma métier de base installé. Le frontend statique n’est pas encore connecté à l’authentification ni aux données réelles. Aucune réservation, livraison ou transaction réelle n’est activée.
 
 ## Décision de séparation des environnements
 
-Le compte Supabase actuellement accessible ne présente pas de projet JotColis dédié. Le seul projet repéré est « Dekk Food », inactif et sans rapport avec JotColis. **Ne pas le réutiliser, le restaurer ou y modifier le schéma.** Créer un projet séparé seulement après vérification et acceptation explicite du coût affiché par Supabase. Les migrations seront versionnées dans ce dépôt avant leur application.
+Le projet Supabase **JotColis** est distinct de Dekk Food : référence `rzezmtahqrxiivdjfajo`, région Paris (`eu-west-3`), URL `https://rzezmtahqrxiivdjfajo.supabase.co`. Le tarif affiché lors de la création était de 0 $/mois ; les limites et éventuels usages additionnels doivent être surveillés. **Dekk Food n’a pas été modifié.** Ne jamais mettre une clé `service_role` dans le frontend ou le dépôt.
 
 ## Migration SQL préparée (non exécutée)
 
