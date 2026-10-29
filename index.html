@@ -158,15 +158,19 @@
     <section class="section gp-section" id="publier">
       <div class="gp-panel">
         <div class="gp-copy"><p class="eyebrow">Vous prenez bientôt la route ?</p><h2>Votre trajet peut aider quelqu’un.</h2><p>Les voyageurs pourront publier leurs dates, leur itinéraire et leur capacité disponible, puis gérer les demandes au même endroit.</p><form id="trip-form" class="trip-form">
-            <p class="form-kicker">Tester la publication d’un trajet fictif</p>
+            <p class="form-kicker">Proposer un trajet</p>
             <div class="trip-form-grid">
-              <div><label for="trip-origin">Départ</label><input id="trip-origin" name="trip-origin" placeholder="Paris" required maxlength="80"></div>
-              <div><label for="trip-destination">Destination</label><input id="trip-destination" name="trip-destination" placeholder="Dakar" required maxlength="80"></div>
+              <div class="trip-form-wide"><label for="trip-corridor">Corridor</label><select id="trip-corridor" name="trip-corridor" required><option value="">Connectez-vous pour charger les corridors</option></select></div>
+              <div><label for="trip-origin">Ville de départ</label><input id="trip-origin" name="trip-origin" placeholder="Paris" required maxlength="120"></div>
+              <div><label for="trip-destination">Ville d’arrivée</label><input id="trip-destination" name="trip-destination" placeholder="Dakar" required maxlength="120"></div>
               <div><label for="trip-date">Date de départ</label><input id="trip-date" name="trip-date" type="date" required></div>
-              <div><label for="trip-capacity">Capacité (kg)</label><input id="trip-capacity" name="trip-capacity" type="number" min="1" max="100" value="5" required></div>
+              <div><label for="trip-capacity">Capacité (kg)</label><input id="trip-capacity" name="trip-capacity" type="number" min="1" max="500" step="0.5" value="5" required></div>
+              <div><label for="trip-price">Prix par kg (facultatif)</label><input id="trip-price" name="trip-price" type="number" min="0" step="0.01" placeholder="Ex. 8,50"></div>
+              <div><label for="trip-currency">Devise</label><select id="trip-currency" name="trip-currency"><option value="EUR">EUR · Euro</option><option value="XOF">XOF · Franc CFA</option><option value="USD">USD · Dollar US</option><option value="AED">AED · Dirham</option></select></div>
+              <div class="trip-form-wide"><label for="trip-conditions">Conditions (facultatif)</label><input id="trip-conditions" name="trip-conditions" maxlength="2000" placeholder="Ex. dimensions, objets refusés…"></div>
             </div>
-            <button class="button button-light" type="submit">Ajouter à ma démo <span aria-hidden="true">→</span></button>
-            <p id="trip-feedback" class="trip-feedback" role="status" aria-live="polite">Enregistrement local à ce navigateur uniquement.</p>
+            <button class="button button-light" type="submit">Enregistrer mon brouillon <span aria-hidden="true">→</span></button>
+            <p id="trip-feedback" class="trip-feedback" role="status" aria-live="polite">Connectez-vous pour enregistrer un brouillon réel. Il ne sera pas visible aux expéditeurs avant validation.</p>
           </form></div>
         <div class="gp-graphic" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="parcel-box"><span>J</span></div><div class="graphic-pin pin-a">●</div><div class="graphic-pin pin-b">●</div></div>
       </div>
