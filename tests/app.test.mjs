@@ -5,6 +5,9 @@ import { readFile } from "node:fs/promises";
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const js = await readFile(new URL("../app.js", import.meta.url), "utf8");
 const css = await readFile(new URL("../styles.css", import.meta.url), "utf8");
+const experienceCss = await readFile(new URL("../experience.css", import.meta.url), "utf8");
+const globeJs = await readFile(new URL("../journey-globe.js", import.meta.url), "utf8");
+const buildScript = await readFile(new URL("../scripts/build.mjs", import.meta.url), "utf8");
 
 test("landing page declares French and mobile viewport", () => {
   assert.match(html, /<html lang="fr">/);
@@ -84,13 +87,13 @@ test("connected search queries only future published trips on active corridors",
 });
 
 
-test("brand system stays orange, black and white with accessible mobile motion and focus states", () => {
+test("premium identity layers midnight blue and gold over the legacy palette with motion and focus support", () => {
   assert.match(css, /--teal:#f47721/);
-  assert.match(css, /--ink:#171717/);
-  assert.match(css, /--white:#ffffff/);
-  assert.match(css, /\.mobile-bottom-nav a\{min-height:48px\}/);
-  assert.match(css, /prefers-reduced-motion:reduce/);
-  assert.match(css, /button:focus-visible/);
+  assert.match(experienceCss, /--jc-night: #07111d/);
+  assert.match(experienceCss, /--jc-gold: #d5b36b/);
+  assert.match(experienceCss, /\.mobile-bottom-nav a \{[^}]*min-height: 48px/s);
+  assert.match(experienceCss, /prefers-reduced-motion: reduce/);
+  assert.match(experienceCss, /button:focus-visible/);
 });
 
 
@@ -99,4 +102,27 @@ test("landing copy avoids promising unavailable booking or fabricated inventory"
   assert.match(html, /Statuts et limites visibles/);
   assert.match(html, /Les réservations restent désactivées/);
   assert.doesNotMatch(html, /Prix expliqué avant confirmation/);
+});
+
+test("premium experience keeps the existing app actions and adds a self-contained interactive route globe", () => {
+  assert.match(html, /id="search-form"/);
+  assert.match(html, /id="signup-form"/);
+  assert.match(html, /id="trip-form"/);
+  assert.match(html, /id="world-canvas"/);
+  assert.match(html, /id="globe-reset"/);
+  assert.match(html, /id="globe-turn-left"/);
+  assert.match(html, /id="globe-turn-right"/);
+  assert.match(html, /Animation illustrative · aucun suivi GPS/);
+  assert.match(html, /jc-icon-box/);
+  assert.match(html, /jc-icon-shield/);
+  assert.match(experienceCss, /prefers-reduced-motion: reduce/);
+  assert.match(experienceCss, /@media \(max-width: 760px\)/);
+  assert.match(globeJs, /greatCirclePoint/);
+  assert.match(globeJs, /pointerdown/);
+  assert.match(globeJs, /pointermove/);
+  assert.match(globeJs, /prefers-reduced-motion/);
+  assert.match(globeJs, /Paris → Dakar/);
+  assert.match(globeJs, /Dakar → Paris/);
+  assert.match(buildScript, /experience\.css/);
+  assert.match(buildScript, /journey-globe\.js/);
 });

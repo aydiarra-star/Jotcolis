@@ -3,16 +3,77 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Prototype visuel de JotColis — recherche de trajets pour colis.">
+  <meta name="description" content="Prototype JotColis — explorez le corridor Dakar–Paris, recherchez un trajet et suivez chaque étape de remise en toute transparence.">
   <title>JotColis — Votre colis voyage avec confiance</title>
+  <meta name="theme-color" content="#08111d">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./premium.css">
+  <link rel="stylesheet" href="./experience.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.min.js" defer></script>
   <script src="./supabase-config.js" defer></script>
   <script src="./app.js?v=international-corridors-20261029" defer></script>
+  <script src="./journey-globe.js" defer></script>
 </head>
 <body>
-  <div class="demo-banner">DÉMONSTRATION · Données locales fictives · Aucune réservation réelle</div>
+  <svg class="svg-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="jc-gold-metal" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#fff0bd"/>
+        <stop offset=".34" stop-color="#d9b86f"/>
+        <stop offset=".7" stop-color="#a97c36"/>
+        <stop offset="1" stop-color="#f7dda0"/>
+      </linearGradient>
+      <linearGradient id="jc-gold-edge" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fff6d8"/>
+        <stop offset="1" stop-color="#bd914b"/>
+      </linearGradient>
+      <filter id="jc-icon-shadow" x="-30%" y="-30%" width="160%" height="170%">
+        <feDropShadow dx="0" dy="2.4" stdDeviation="1.6" flood-color="#000814" flood-opacity=".55"/>
+      </filter>
+    </defs>
+    <symbol id="jc-icon-pin" viewBox="0 0 48 48">
+      <path d="M24 4.8c-8 0-14.4 6.4-14.4 14.3 0 10.1 14.4 24.2 14.4 24.2s14.4-14.1 14.4-24.2C38.4 11.2 32 4.8 24 4.8Z" fill="url(#jc-gold-metal)" filter="url(#jc-icon-shadow)"/>
+      <path d="M15.3 18.5c0-4.8 3.9-8.7 8.7-8.7 3.1 0 5.9 1.7 7.4 4.2-2.2-1.2-4.9-1.4-7.3-.3-3.6 1.6-5.5 5.8-4.4 9.6-2.6-1.5-4.4-3.7-4.4-4.8Z" fill="#fff4d1" opacity=".72"/>
+      <circle cx="24" cy="19.1" r="5.1" fill="#132336"/>
+      <circle cx="22.5" cy="17.6" r="1.5" fill="#fff0bd"/>
+    </symbol>
+    <symbol id="jc-icon-route" viewBox="0 0 48 48">
+      <path d="M10 34.5c5-10.5 12.4-18.6 27.5-21" fill="none" stroke="url(#jc-gold-edge)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="1 5"/>
+      <circle cx="10" cy="34.5" r="5.3" fill="url(#jc-gold-metal)" filter="url(#jc-icon-shadow)"/>
+      <circle cx="10" cy="34.5" r="2" fill="#132336"/>
+      <circle cx="37.5" cy="13.5" r="5.3" fill="url(#jc-gold-metal)" filter="url(#jc-icon-shadow)"/>
+      <circle cx="37.5" cy="13.5" r="2" fill="#132336"/>
+      <path d="m20.8 20.4 8.7-8.8 1.4 7.2-5.3 2.7-2.8 5.1-2-6.2Z" fill="url(#jc-gold-edge)" filter="url(#jc-icon-shadow)"/>
+    </symbol>
+    <symbol id="jc-icon-shield" viewBox="0 0 48 48">
+      <path d="M24 4.5 39 10v11.3c0 10.4-6.7 17.7-15 22.2C15.7 39 9 31.7 9 21.3V10l15-5.5Z" fill="url(#jc-gold-metal)" filter="url(#jc-icon-shadow)"/>
+      <path d="M24 9.2 34.2 13v8.1c0 7.2-4.2 13-10.2 16.8-6-3.8-10.2-9.6-10.2-16.8V13L24 9.2Z" fill="#142337"/>
+      <path d="m18.2 23.7 3.7 3.7 8.2-8.6" fill="none" stroke="url(#jc-gold-edge)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="jc-icon-plane" viewBox="0 0 48 48">
+      <path d="m43.1 6.7-12.6 35-5.6-15.4L9.5 20.6 43.1 6.7Z" fill="url(#jc-gold-metal)" filter="url(#jc-icon-shadow)"/>
+      <path d="m25.1 26.3 8.2-8.4-11 5.6 2.8 2.8Z" fill="#fff6d8" opacity=".85"/>
+      <path d="m24.9 26.1-2.4 6.8-2.2-8.5" fill="#a87a35" opacity=".8"/>
+    </symbol>
+    <symbol id="jc-icon-search" viewBox="0 0 48 48">
+      <circle cx="20.5" cy="20.5" r="13.6" fill="url(#jc-gold-metal)" filter="url(#jc-icon-shadow)"/>
+      <circle cx="20.5" cy="20.5" r="9.5" fill="#142337"/>
+      <path d="M30.5 30.5 41 41" fill="none" stroke="url(#jc-gold-edge)" stroke-width="5" stroke-linecap="round" filter="url(#jc-icon-shadow)"/>
+      <path d="M14 18.2c.8-3 3.2-4.8 6.2-5.1" fill="none" stroke="#fff5d6" stroke-width="1.8" stroke-linecap="round" opacity=".9"/>
+    </symbol>
+    <symbol id="jc-icon-box" viewBox="0 0 48 48">
+      <path d="m24 5 17 9.5v19L24 43l-17-9.5v-19L24 5Z" fill="url(#jc-gold-metal)" filter="url(#jc-icon-shadow)"/>
+      <path d="m24 24 17-9.5v19L24 43V24Z" fill="#b68743" opacity=".72"/>
+      <path d="m7 14.5 17 9.5v19L7 33.5v-19Z" fill="#f6dda2" opacity=".56"/>
+      <path d="m7 14.5 17 9.3 17-9.3M24 24v19M18.5 11.9l17 9.4" fill="none" stroke="#fff2c7" stroke-width="1.6" opacity=".85"/>
+    </symbol>
+    <symbol id="jc-icon-handshake" viewBox="0 0 48 48">
+      <path d="m4.5 18.5 9.3-8 8 2.2 5-2.2 16.7 8.2-5.7 8.5-4.1 10.5-3.2-.7-4.2 2.2-4.5-2.1-3.2 1.1-10.3-10L4.5 18.5Z" fill="url(#jc-gold-metal)" filter="url(#jc-icon-shadow)"/>
+      <path d="m12.2 20.4 6.2-5.3c1.4-1.2 3.6-1.2 5 0l2.2 1.9 3.1-1.8 8.8 4.3-5.9 7.1-3.9 3.7-3.4 4.2-4.3-2.1-3.1 1.1-8.2-8.3" fill="#142337" opacity=".94"/>
+      <path d="m18.4 20.1 5.4 4.3c1.4 1.1 3.5 1 4.8-.3l3.1-2.9M21.5 30.3l7.4 6.1M18.6 33.2l5.8 4.8M15.5 35l4.3 3.3" fill="none" stroke="url(#jc-gold-edge)" stroke-width="2.5" stroke-linecap="round"/>
+    </symbol>
+  </svg>
+  <div class="demo-banner"><span class="demo-banner-mark" aria-hidden="true"></span>DÉMONSTRATION · Données locales fictives · Aucune réservation réelle</div>
   <header class="site-header">
     <a class="brand" href="#" aria-label="JotColis, accueil">
       <span class="brand-mark" aria-hidden="true">J</span>
@@ -27,29 +88,53 @@
 
   <main>
     <section class="hero" id="accueil">
+      <div class="hero-atmosphere" aria-hidden="true"></div>
       <div class="hero-copy">
-        <p class="eyebrow"><span class="eyebrow-dot"></span> Une nouvelle façon d’envoyer</p>
-        <h1>Votre colis.<br><span>Le bon trajet.</span></h1>
-        <p class="hero-description">Trouvez un voyageur sur votre itinéraire, clarifiez les conditions et suivez les étapes de remise en toute transparence.</p>
+        <p class="eyebrow"><span class="eyebrow-dot"></span> Le corridor signature · France ↔ Sénégal</p>
+        <h1>Dakar <span class="hero-arrow">↔</span> Paris.<br><span>Le voyage en confiance.</span></h1>
+        <p class="hero-description">Le colis voyage avec un passager déjà sur la route. Des conditions lisibles, des étapes suivies et une attention portée à chaque remise.</p>
+        <div class="hero-route-note"><span class="route-note-icon" aria-hidden="true"><svg><use href="#jc-icon-route"></use></svg></span><span><strong>Une route, deux villes.</strong><small>Un parcours clair, de la prise en charge à la remise.</small></span></div>
         <div class="hero-points">
           <span><span class="check">✓</span> Aucune fausse disponibilité</span>
           <span><span class="check">✓</span> Statuts et limites visibles</span>
         </div>
+        <a class="hero-discover-link" href="#search-form">Découvrir le trajet <span aria-hidden="true">↓</span></a>
       </div>
+
+      <div class="globe-stage" role="group" aria-label="Globe 3D interactif illustrant la liaison Dakar–Paris">
+        <div class="globe-stage-topline"><span class="globe-live-dot" aria-hidden="true"></span><span>ROUTE SIGNATURE</span><span class="globe-stage-code">DKR <i>·</i> PAR</span></div>
+        <div class="globe-shell">
+          <div class="globe-halo" aria-hidden="true"></div>
+          <div class="globe-orbit globe-orbit-a" aria-hidden="true"></div>
+          <div class="globe-orbit globe-orbit-b" aria-hidden="true"></div>
+          <canvas id="world-canvas" class="world-canvas" aria-hidden="true">Globe illustratif interactif de la liaison Dakar–Paris.</canvas>
+          <div class="globe-controls" role="group" aria-label="Commandes du globe">
+            <button class="globe-control" id="globe-turn-left" type="button" aria-label="Faire pivoter le globe vers l’ouest" title="Tourner vers l’ouest"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button class="globe-control globe-reset" id="globe-reset" type="button" aria-label="Recentrer le globe sur Dakar et Paris" title="Recentrer le globe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.7-4L3 10M3 5v5h5M4 13a8 8 0 0 0 14.7 4L21 14m0 5v-5h-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button class="globe-control" id="globe-turn-right" type="button" aria-label="Faire pivoter le globe vers l’est" title="Tourner vers l’est"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+          <span class="globe-drag-hint"><span class="drag-hand" aria-hidden="true">↔</span> FAITES GLISSER POUR EXPLORER</span>
+        </div>
+        <div class="flight-console" role="group" aria-label="Animation de démonstration de la liaison Paris–Dakar">
+          <div class="flight-console-route"><span>PARIS</span><span class="flight-console-track"><svg class="flight-console-plane" aria-hidden="true"><use href="#jc-icon-plane"></use></svg></span><span>DAKAR</span></div>
+          <div class="flight-console-meta"><span class="flight-console-copy"><strong id="flight-direction">Paris → Dakar</strong><small id="flight-status">Animation illustrative · aucun suivi GPS</small></span><span class="flight-demo-badge"><i aria-hidden="true"></i> MODE DÉMO</span></div>
+        </div>
+      </div>
+
       <div class="search-card" aria-labelledby="search-title">
         <div class="card-heading">
           <div>
-            <p class="eyebrow">Trouver un trajet</p>
+            <p class="eyebrow">Votre prochain envoi</p>
             <h2 id="search-title">Où va votre colis ?</h2>
           </div>
-          <span class="card-icon" aria-hidden="true">↗</span>
+          <span class="card-icon" aria-hidden="true"><svg><use href="#jc-icon-route"></use></svg></span>
         </div>
         <form id="search-form">
           <label for="origin">Départ</label>
-          <div class="input-wrap"><span aria-hidden="true">●</span><input id="origin" name="origin" placeholder="Ex. Paris" aria-label="Ville de départ" autocomplete="address-level2" required></div>
+          <div class="input-wrap"><span class="field-icon" aria-hidden="true"><svg><use href="#jc-icon-pin"></use></svg></span><input id="origin" name="origin" placeholder="Ex. Paris" aria-label="Ville de départ" autocomplete="address-level2" required></div>
           <div class="direction-switch-row"><span class="direction-hint">Sens du trajet</span><button class="direction-switch" id="swap-direction" type="button" aria-label="Inverser le sens du trajet" title="Inverser départ et destination"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h13a4 4 0 0 1 4 4M17 20l4-4-4-4M21 16H8a4 4 0 0 1-4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Inverser</span></button></div>
           <label for="destination">Arrivée</label>
-          <div class="input-wrap"><span aria-hidden="true">◎</span><input id="destination" name="destination" placeholder="Ex. Dakar" aria-label="Ville d’arrivée" autocomplete="address-level2" required></div>
+          <div class="input-wrap"><span class="field-icon" aria-hidden="true"><svg><use href="#jc-icon-pin"></use></svg></span><input id="destination" name="destination" placeholder="Ex. Dakar" aria-label="Ville d’arrivée" autocomplete="address-level2" required></div>
           <div class="form-row">
             <div>
               <label for="travel-date">Date souhaitée</label>
@@ -71,14 +156,12 @@
           <div id="search-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
         </form>
       </div>
-      <div class="hero-decoration decoration-one" aria-hidden="true"></div>
-      <div class="hero-decoration decoration-two" aria-hidden="true"></div>
     </section>
 
     <section class="trust-strip" id="confiance" aria-label="Principes de confiance">
-      <div class="trust-item"><span class="trust-icon" aria-hidden="true">✓</span><div><strong>Des étapes claires</strong><p>Chaque étape a son statut.</p></div></div>
-      <div class="trust-item"><span class="trust-icon" aria-hidden="true">⌁</span><div><strong>Un suivi honnête</strong><p>Pas de fausse position GPS.</p></div></div>
-      <div class="trust-item"><span class="trust-icon" aria-hidden="true">↗</span><div><strong>Des règles visibles</strong><p>Conditions avant confirmation.</p></div></div>
+      <div class="trust-item"><span class="trust-icon" aria-hidden="true"><svg><use href="#jc-icon-shield"></use></svg></span><div><strong>Des étapes claires</strong><p>Chaque étape a son statut.</p></div></div>
+      <div class="trust-item"><span class="trust-icon" aria-hidden="true"><svg><use href="#jc-icon-route"></use></svg></span><div><strong>Un suivi honnête</strong><p>Pas de fausse position GPS.</p></div></div>
+      <div class="trust-item"><span class="trust-icon" aria-hidden="true"><svg><use href="#jc-icon-handshake"></use></svg></span><div><strong>Des règles visibles</strong><p>Conditions avant confirmation.</p></div></div>
     </section>
 
     <section class="section account-section" id="compte" aria-labelledby="account-title">
@@ -131,9 +214,9 @@
         <p>Un parcours conçu pour que chaque personne sache où en est le colis et quelle est la prochaine étape.</p>
       </div>
       <div class="steps">
-        <article class="step-card"><span class="step-number">01</span><div class="step-illustration illustration-search" aria-hidden="true"><span>⌕</span></div><h3>Trouvez un trajet</h3><p>Comparez les trajets compatibles avec votre date et les caractéristiques du colis.</p></article>
-        <article class="step-card"><span class="step-number">02</span><div class="step-illustration illustration-hand" aria-hidden="true"><span>↗</span></div><h3>Confirmez les conditions</h3><p>Le GP accepte la demande. Le prix total et les conditions sont visibles avant confirmation.</p></article>
-        <article class="step-card"><span class="step-number">03</span><div class="step-illustration illustration-check" aria-hidden="true"><span>✓</span></div><h3>Suivez la remise</h3><p>La prise en charge, l’arrivée et la remise sont enregistrées comme des étapes distinctes.</p></article>
+        <article class="step-card"><span class="step-number">01</span><div class="step-illustration illustration-search" aria-hidden="true"><svg><use href="#jc-icon-search"></use></svg></div><h3>Trouvez un trajet</h3><p>Comparez les trajets compatibles avec votre date et les caractéristiques du colis.</p></article>
+        <article class="step-card"><span class="step-number">02</span><div class="step-illustration illustration-hand" aria-hidden="true"><svg><use href="#jc-icon-handshake"></use></svg></div><h3>Confirmez les conditions</h3><p>Le GP accepte la demande. Le prix total et les conditions sont visibles avant confirmation.</p></article>
+        <article class="step-card"><span class="step-number">03</span><div class="step-illustration illustration-check" aria-hidden="true"><svg><use href="#jc-icon-shield"></use></svg></div><h3>Suivez la remise</h3><p>La prise en charge, l’arrivée et la remise sont enregistrées comme des étapes distinctes.</p></article>
       </div>
     </section>
 
@@ -146,7 +229,7 @@
       </div>
       <div class="timeline-card" aria-label="Exemple fictif de passeport de colis">
         <div class="timeline-top"><div><span class="small-label">PASSEPORT DU COLIS</span><strong>JC-EXEMPLE-2048</strong></div><span class="status-pill">Démonstration</span></div>
-        <div class="route-line"><span class="route-point"></span><div><span class="small-label">DÉPART</span><strong>Paris, France</strong></div><span class="route-dash flight-track" aria-label="Liaison aérienne Paris–Dakar"><svg class="route-plane" viewBox="0 0 24 24" role="img" aria-label="Avion en vol"><path d="M21 3 14.5 21l-3.7-7.8L3 9.5 21 3Z" fill="currentColor"/><path d="m10.8 13.2 4.7-4.7" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg></span><span class="route-point route-point-end"></span><div><span class="small-label">DESTINATION</span><strong>Dakar, Sénégal</strong></div></div>
+        <div class="route-line"><span class="route-point"></span><div><span class="small-label">DÉPART</span><strong>Paris, France</strong></div><span class="route-dash flight-track" aria-label="Liaison aérienne Paris–Dakar"><svg class="route-plane" viewBox="0 0 48 48" role="img" aria-label="Avion en vol"><use href="#jc-icon-plane"></use></svg></span><span class="route-point route-point-end"></span><div><span class="small-label">DESTINATION</span><strong>Dakar, Sénégal</strong></div></div>
         <div class="timeline">
           <div class="timeline-event complete"><span class="timeline-marker">✓</span><div><strong>Demande créée</strong><p>Exemple d’événement · 09:10</p></div><span class="event-tag">Enregistré</span></div>
           <div class="timeline-event complete"><span class="timeline-marker">✓</span><div><strong>Prise en charge</strong><p>Exemple d’événement · 11:45</p></div><span class="event-tag">Déclaré</span></div>
@@ -174,7 +257,7 @@
             <button class="button button-light" type="submit">Enregistrer mon brouillon <span aria-hidden="true">→</span></button>
             <p id="trip-feedback" class="trip-feedback" role="status" aria-live="polite">Connectez-vous pour enregistrer un brouillon réel. Il ne sera pas visible aux expéditeurs avant validation.</p>
           </form></div>
-        <div class="gp-graphic" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="parcel-box"><span>J</span></div><div class="graphic-pin pin-a">●</div><div class="graphic-pin pin-b">●</div></div>
+        <div class="gp-graphic" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="parcel-box"><svg aria-hidden="true"><use href="#jc-icon-box"></use></svg></div><div class="graphic-pin pin-a">●</div><div class="graphic-pin pin-b">●</div></div>
       </div>
     </section>
 
