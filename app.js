@@ -139,6 +139,25 @@ document.querySelectorAll(".mobile-bottom-nav a").forEach(function (link) {
   });
 });
 
+
+// Raccourcis des corridors internationaux : ils remplissent la recherche sans promettre de disponibilité.
+document.querySelectorAll(".corridor-card").forEach(function (button) {
+  button.addEventListener("click", function () {
+    const origin = document.querySelector("#origin");
+    const destination = document.querySelector("#destination");
+    if (!origin || !destination) return;
+    origin.value = button.dataset.origin || "";
+    destination.value = button.dataset.destination || "Dakar";
+    document.querySelector("#search-form")?.scrollIntoView({behavior:"smooth",block:"center"});
+    origin.focus({preventScroll:true});
+    const feedback = document.querySelector("#search-feedback");
+    if (feedback) {
+      feedback.hidden = false;
+      feedback.textContent = "Itinéraire prérempli. Les corridors sont en préparation ; aucune disponibilité réelle n’est consultée.";
+    }
+  });
+});
+
 // Authentification réelle Supabase. Aucun secret privilégié n'est chargé dans le navigateur.
 (function initJotColisAuth() {
   const status = document.querySelector("#auth-status");
