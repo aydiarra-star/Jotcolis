@@ -70,3 +70,15 @@ test("browser Supabase configuration is public-only and auth forms can be hidden
   assert.doesNotMatch(config, /service_role|secret_key/i);
   assert.match(css, /\.auth-card\[hidden\].*display:none!important/);
 });
+
+
+test("connected search queries only future published trips on active corridors", () => {
+  assert.match(js, /window\.JOTCOLIS_SUPABASE = client/);
+  assert.match(js, /from\("trips"\)/);
+  assert.match(js, /\.eq\("status", "published"\)/);
+  assert.match(js, /\.eq\("corridors\.is_active", true\)/);
+  assert.match(js, /\.gte\("departure_at", new Date\(\)\.toISOString\(\)\)/);
+  assert.match(js, /Aucun trajet réel publié/);
+  assert.match(js, /Aucun exemple fictif n’est présenté comme une offre réelle/);
+  assert.match(js, /Réservation non activée/);
+});
