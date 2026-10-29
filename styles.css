@@ -267,3 +267,20 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   100%{left:0;opacity:0;transform:translateY(2px) rotate(0deg)}
 }
 @media(prefers-reduced-motion:reduce){.route-plane{animation:none;left:calc(50% - 11px);opacity:1}}
+
+
+/* Corridors internationaux en préparation — raccourcis de recherche, sans fausse disponibilité */
+.corridors-section{background:#f6f8fc;padding-top:58px;padding-bottom:58px}
+.corridors-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:25px}
+.corridors-heading h2{font-size:clamp(27px,3.5vw,40px);line-height:1.12;letter-spacing:-.045em;margin:0 0 12px}
+.corridors-heading p:not(.eyebrow){max-width:690px;color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:0}
+.corridor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.corridor-card{display:flex;align-items:center;gap:14px;min-width:0;padding:17px;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);text-align:left;cursor:pointer;transition:border-color .15s ease,transform .15s ease}
+.corridor-card:hover{border-color:var(--teal);transform:translateY(-1px)}
+.corridor-flag{display:grid;place-items:center;flex:0 0 43px;width:43px;height:43px;background:#edf4ff;border-radius:13px;font-size:23px}
+.corridor-card>span:nth-child(2){display:block;min-width:0;flex:1}
+.corridor-card strong{display:block;font-size:13px;line-height:1.35}
+.corridor-card small{display:block;margin-top:4px;color:var(--muted);font-size:10px;line-height:1.5}
+.corridor-arrow{color:var(--teal);font-size:20px}
+.corridors-note{margin:17px 0 0;color:var(--muted);font-size:11px;line-height:1.7;max-width:850px}
+@media(max-width:700px){.corridors-heading{gap:12px;flex-direction:column}.corridor-grid{grid-template-columns:1fr}.corridor-card{padding:14px}.corridor-card strong{font-size:12px}}
