@@ -227,3 +227,12 @@ h3, .step-card h3, .trip-card h3, .auth-card h3 { font-size: 14px !important; li
   h2, .section-intro h2, .passport-copy h2, .closing-cta h2, .gp-copy h2,
   .results-heading h2, .corridors-heading h2, .account-heading h2, .card-heading h2 { font-size: 18px !important; }
 }
+
+/* OVERRIDE FINAL — réduire visiblement chaque niveau de titre sur toute l’application */
+body h1, body .hero h1, body main h1 { font-size: 24px !important; line-height: 1.18 !important; letter-spacing: -.035em !important; margin-bottom: 14px !important; }
+body h2, body main h2, body .card-heading h2, body .section-intro h2, body .passport-copy h2, body .closing-cta h2, body .gp-copy h2, body .results-heading h2, body .corridors-heading h2, body .account-heading h2 { font-size: 19px !important; line-height: 1.25 !important; letter-spacing: -.02em !important; }
+body h3, body main h3, body .step-card h3, body .trip-card h3, body .auth-card h3 { font-size: 14px !important; line-height: 1.35 !important; }
+@media(min-width:701px) {
+ body h1, body .hero h1, body main h1 { font-size: 30px !important; }
+ body h2, body main h2, body .card-heading h2, body .section-intro h2, body .passport-copy h2, body .closing-cta h2, body .gp-copy h2, body .results-heading h2, body .corridors-heading h2, body .account-heading h2 { font-size: 21px !important; }
+}
