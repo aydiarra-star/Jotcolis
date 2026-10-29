@@ -181,12 +181,12 @@
     for (let latitude = -60; latitude <= 60; latitude += 30) {
       const points = [];
       for (let longitude = -180; longitude <= 180; longitude += 3) points.push({ longitude, latitude });
-      strokeVisibleLine(points, latitude === 0 ? "rgba(255, 223, 189, .21)" : "rgba(255, 223, 189, .14)", latitude === 0 ? .8 : .55);
+      strokeVisibleLine(points, latitude === 0 ? "rgba(255, 240, 227, .21)" : "rgba(255, 240, 227, .14)", latitude === 0 ? .8 : .55);
     }
     for (let longitude = -180; longitude < 180; longitude += 30) {
       const points = [];
       for (let latitude = -87; latitude <= 87; latitude += 3) points.push({ longitude, latitude });
-      strokeVisibleLine(points, "rgba(255, 223, 189, .13)", .55);
+      strokeVisibleLine(points, "rgba(255, 240, 227, .13)", .55);
     }
   }
 
@@ -224,7 +224,7 @@
     const landGradient = context.createLinearGradient(
       state.width * .22, state.height * .2, state.width * .77, state.height * .82
     );
-    landGradient.addColorStop(0, "rgba(255, 154, 82, .52)");
+    landGradient.addColorStop(0, "rgba(223, 93, 11, .52)");
     landGradient.addColorStop(.48, "rgba(244, 119, 33, .44)");
     landGradient.addColorStop(1, "rgba(198, 83, 8, .42)");
     context.fillStyle = landGradient;
@@ -239,7 +239,7 @@
       context.globalAlpha = alpha;
       context.beginPath();
       context.arc(point.x, point.y, dot.size, 0, Math.PI * 2);
-      context.fillStyle = dot.shimmer > .82 ? "#f47721" : "#ff9a52";
+      context.fillStyle = dot.shimmer > .82 ? "#f47721" : "#df5d0b";
       context.fill();
     }
     context.restore();
@@ -247,7 +247,7 @@
 
   function drawRoute(flight) {
     strokeVisibleLine(route, "rgba(244, 119, 33, .2)", 3.4, 8);
-    strokeVisibleLine(route, "rgba(255, 154, 82, .78)", 1.25, 5);
+    strokeVisibleLine(route, "rgba(223, 93, 11, .78)", 1.25, 5);
 
     const position = greatCirclePoint(PARIS, DAKAR, flight.routeAmount);
     const point = project(position.longitude, position.latitude);
@@ -263,7 +263,7 @@
     context.save();
     context.translate(point.x, point.y);
     context.rotate(angle);
-    context.shadowColor = "rgba(255, 154, 82, .95)";
+    context.shadowColor = "rgba(223, 93, 11, .95)";
     context.shadowBlur = 16;
     const metal = context.createLinearGradient(-13, -7, 13, 7);
     metal.addColorStop(0, "#fff0e3");
@@ -293,7 +293,7 @@
     context.save();
     context.beginPath();
     context.arc(point.x, point.y, 3.3, 0, Math.PI * 2);
-    context.fillStyle = "rgba(255, 223, 189, .86)";
+    context.fillStyle = "rgba(255, 240, 227, .86)";
     context.shadowColor = "rgba(244, 119, 33, .9)";
     context.shadowBlur = 13;
     context.fill();
@@ -304,7 +304,7 @@
     const point = project(city.longitude, city.latitude);
     if (point.depth < .06) return;
     const isParis = city.color === "gold";
-    const tint = isParis ? "#ff9a52" : "#f47721";
+    const tint = isParis ? "#df5d0b" : "#f47721";
     const pulse = .5 + (Math.sin(now / 360 + (isParis ? 0 : 1.4)) + 1) * .18;
     context.save();
     context.globalAlpha = pulse;
@@ -331,8 +331,8 @@
     context.textBaseline = "middle";
     context.textAlign = "left";
     context.shadowBlur = 6;
-    context.shadowColor = "rgba(0, 0, 0, .9)";
-    context.fillStyle = isParis ? "#fff0e3" : "#ffdfbd";
+    context.shadowColor = "rgba(36, 35, 38, .9)";
+    context.fillStyle = isParis ? "#fff0e3" : "#df5d0b";
     context.fillText(city.name, point.x + 10, point.y - 1);
     context.restore();
   }
@@ -352,7 +352,7 @@
     context.save();
     context.beginPath();
     context.arc(cx, cy, radius + 1.5, 0, Math.PI * 2);
-    context.strokeStyle = "rgba(255, 154, 82, .62)";
+    context.strokeStyle = "rgba(223, 93, 11, .62)";
     context.lineWidth = 1.1;
     context.shadowColor = "rgba(244, 119, 33, .35)";
     context.shadowBlur = 14;
@@ -373,8 +373,8 @@
     context.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
 
     const surfaceLight = context.createRadialGradient(cx - radius * .34, cy - radius * .38, radius * .04, cx, cy, radius * 1.06);
-    surfaceLight.addColorStop(0, "rgba(255, 223, 189, .13)");
-    surfaceLight.addColorStop(.58, "rgba(255, 223, 189, .045)");
+    surfaceLight.addColorStop(0, "rgba(255, 240, 227, .13)");
+    surfaceLight.addColorStop(.58, "rgba(255, 240, 227, .045)");
     surfaceLight.addColorStop(1, "rgba(255, 240, 227, .69)");
     context.fillStyle = surfaceLight;
     context.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
@@ -398,7 +398,7 @@
     context.fill();
     context.beginPath();
     context.arc(cx, cy, radius - .4, 0, Math.PI * 2);
-    context.strokeStyle = "rgba(255, 223, 189, .22)";
+    context.strokeStyle = "rgba(255, 240, 227, .22)";
     context.lineWidth = .65;
     context.stroke();
     context.restore();
