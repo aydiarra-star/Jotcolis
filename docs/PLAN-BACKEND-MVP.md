@@ -41,7 +41,7 @@ Le schéma métier de base est installé sur le projet Supabase JotColis. Le fic
 1. [x] Créer le projet Supabase JotColis distinct et installer le schéma métier de base.
 2. [x] Préparer les corridors internationaux en base, désactivés par défaut.
 3. [ ] Tester et finaliser les politiques avec des comptes expéditeur/GP/destinataire distincts.
-4. [x] Connecter le frontend à Supabase Auth avec URL et clé publishable dans un fichier de configuration public.
+4. [x] Connecter le frontend à Supabase Auth avec URL et clé publishable dans un fichier de configuration public. Ajouter l’URL de prévisualisation Render à la liste des redirections autorisées dans Supabase Auth avant de valider la confirmation d’e-mail en environnement hébergé.
 5. [~] Ajouter les parcours d’inscription/connexion ; valider la confirmation e-mail et la redirection, puis implémenter publication/recherche de trajets.
 6. Ajouter demandes et réservations transactionnelles.
 7. Ajouter passeport et incidents.
