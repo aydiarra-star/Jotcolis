@@ -341,7 +341,7 @@ input::placeholder{color:#6b6b6b}
 /* Sens du trajet — permutation claire et adaptée au mobile */
 .direction-switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:9px 0 2px;}
 .direction-hint{font-size:11px;color:#777;line-height:1.3;}
-.direction-switch{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:7px 12px;border:1px solid #ffd7bb;border-radius:999px;background:#fff4eb;color:#b94b08;font:700 12px/1.2 inherit;cursor:pointer;transition:background .18s ease,transform .18s ease,border-color .18s ease;}
+.direction-switch{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:7px 12px;border:1px solid #ffd7bb;border-radius:999px;background:#fff4eb;color:#b94b08;font-family:inherit;font-size:12px;font-weight:700;line-height:1.2;cursor:pointer;transition:background .18s ease,transform .18s ease,border-color .18s ease;}
 .direction-switch svg{width:18px;height:18px;flex:0 0 18px;transition:transform .18s ease;}
 .direction-switch:hover{background:#ffe5d0;border-color:#f47721;}
 .direction-switch:active{transform:scale(.97);}
