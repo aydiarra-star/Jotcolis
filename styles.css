@@ -303,3 +303,5 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 .account-session span{font-size:13px;overflow-wrap:anywhere}
 .account-note{margin-top:15px;color:var(--muted);font-size:11px;line-height:1.7}
 @media(max-width:700px){.account-heading{flex-direction:column;gap:10px}.auth-grid{grid-template-columns:1fr}.auth-card{padding:17px}.account-session{align-items:flex-start;flex-direction:column}}
+
+.auth-card[hidden],.account-session[hidden]{display:none!important}
