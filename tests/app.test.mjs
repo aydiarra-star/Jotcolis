@@ -87,10 +87,10 @@ test("connected search queries only future published trips on active corridors",
 });
 
 
-test("premium identity layers midnight blue and gold over the legacy palette with motion and focus support", () => {
+test("premium identity restores the historical orange palette with motion and focus support", () => {
   assert.match(css, /--teal:#f47721/);
-  assert.match(experienceCss, /--jc-night: #07111d/);
-  assert.match(experienceCss, /--jc-gold: #d5b36b/);
+  assert.match(experienceCss, /--jc-night: #fffaf6/);
+  assert.match(experienceCss, /--jc-gold: #f47721/);
   assert.match(experienceCss, /\.mobile-bottom-nav a \{[^}]*min-height: 48px/s);
   assert.match(experienceCss, /prefers-reduced-motion: reduce/);
   assert.match(experienceCss, /button:focus-visible/);
