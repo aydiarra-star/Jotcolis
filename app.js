@@ -47,14 +47,68 @@ if (form && feedback) {
   });
 }
 if (tripForm && tripFeedback) {
-  tripForm.addEventListener("submit", function (event) {
+  tripForm.addEventListener("submit", async function (event) {
     event.preventDefault();
+    const client = window.JOTCOLIS_SUPABASE;
     const origin = document.querySelector("#trip-origin").value.trim();
     const destination = document.querySelector("#trip-destination").value.trim();
     const date = document.querySelector("#trip-date").value;
     const capacity = Number(document.querySelector("#trip-capacity").value);
+    if (client) {
+      const button = tripForm.querySelector('button[type="submit"]');
+      const corridorId = document.querySelector("#trip-corridor").value;
+      const priceText = document.querySelector("#trip-price").value.trim();
+      const price = priceText === "" ? null : Number(priceText);
+      const currency = document.querySelector("#trip-currency").value;
+      const conditions = document.querySelector("#trip-conditions").value.trim();
+      if (!origin || !destination || !date || !corridorId || !Number.isFinite(capacity) || capacity <= 0 || capacity > 500 || (price !== null && (!Number.isFinite(price) || price < 0))) {
+        tripFeedback.textContent = "Vérifiez le corridor, les villes, la date, la capacité et le prix.";
+        return;
+      }
+      if (new Date(date + "T23:59:59").getTime() <= Date.now()) {
+        tripFeedback.textContent = "La date de départ doit être dans le futur.";
+        return;
+      }
+      button.disabled = true;
+      tripFeedback.textContent = "Enregistrement du brouillon en cours…";
+      try {
+        const sessionResult = await client.auth.getSession();
+        if (sessionResult.error) throw sessionResult.error;
+        if (!sessionResult.data.session) {
+          tripFeedback.textContent = "Connectez-vous pour enregistrer un brouillon réel.";
+          return;
+        }
+        const result = await client.rpc("create_trip_draft", {
+          p_corridor_id: corridorId,
+          p_origin_city: origin,
+          p_destination_city: destination,
+          p_departure_at: new Date(date + "T12:00:00").toISOString(),
+          p_capacity_kg: capacity,
+          p_currency: currency,
+          p_price_per_kg: price,
+          p_conditions: conditions || null
+        });
+        if (result.error) throw result.error;
+        const publishResult = await client.rpc("publish_my_trip", {p_trip_id: result.data});
+        if (!publishResult.error) {
+          tripFeedback.textContent = "Trajet publié. Référence : " + result.data + ". Réservations non activées.";
+        } else {
+          tripFeedback.textContent = "Brouillon enregistré (réf. " + result.data + "). La publication exige un compte GP validé et un corridor actif.";
+        }
+        tripForm.reset();
+        document.querySelector("#trip-capacity").value = "5";
+        await loadTripCorridors();
+      } catch (error) {
+        const message = String(error && error.message || "");
+        if (message.includes("ACCOUNT_NOT_ACTIVE")) tripFeedback.textContent = "Ce compte n’est pas actif. Contactez l’équipe JotColis.";
+        else tripFeedback.textContent = "Enregistrement impossible. Vérifiez la connexion et les champs, puis réessayez.";
+      } finally {
+        button.disabled = false;
+      }
+      return;
+    }
     if (!origin || !destination || !date || !Number.isFinite(capacity) || capacity < 1 || capacity > 100) {
-      tripFeedback.textContent = "Vérifiez les villes, la date et une capacité comprise entre 1 et 100 kg."; return;
+      tripFeedback.textContent = "Démo locale : vérifiez les villes, la date et une capacité comprise entre 1 et 100 kg."; return;
     }
     let saved = [];
     try { saved = JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY) || "[]"); if (!Array.isArray(saved)) saved = []; }
@@ -64,6 +118,10 @@ if (tripForm && tripFeedback) {
       localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(saved));
       tripFeedback.textContent = "Trajet fictif ajouté dans ce navigateur seulement. Aucun autre utilisateur ne le voit.";
       tripForm.reset(); document.querySelector("#trip-capacity").value = "5"; renderTrips();
+    } catch { tripFeedback.textContent = "Enregistrement local indisponible. Aucun trajet n’a été publié en ligne."; }
+  });
+}
+renderTrips();
     } catch { tripFeedback.textContent = "Enregistrement local indisponible. Aucun trajet n’a été publié en ligne."; }
   });
 }
