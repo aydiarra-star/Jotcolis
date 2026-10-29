@@ -60,7 +60,7 @@ test("Supabase account flows use only a publishable browser key and expose clear
   assert.match(js, /signInWithPassword\(/);
   assert.match(js, /auth\.signOut\(/);
   assert.match(js, /publishableKey/);
-  assert.match(js, /publication des trajets, les réservations et les paiements ne sont pas encore activés/);
+  assert.match(html, /publication des trajets, les réservations et les paiements ne sont pas encore activés/);
 });
 
 
