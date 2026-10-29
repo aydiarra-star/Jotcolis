@@ -249,6 +249,41 @@ document.querySelectorAll(".corridor-card").forEach(function (button) {
 })();
 
 
+// Charge les corridors disponibles sans exposer les notes internes de validation.
+async function loadTripCorridors() {
+  const select = document.querySelector("#trip-corridor");
+  const client = window.JOTCOLIS_SUPABASE;
+  if (!select) return;
+  select.replaceChildren();
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Connexion requise pour charger les corridors";
+  select.appendChild(placeholder);
+  if (!client) return;
+  try {
+    const sessionResult = await client.auth.getSession();
+    if (sessionResult.error) throw sessionResult.error;
+    if (!sessionResult.data.session) return;
+    placeholder.textContent = "Chargement des corridors…";
+    const result = await client.rpc("list_trip_corridors");
+    if (result.error) throw result.error;
+    if (!Array.isArray(result.data) || result.data.length === 0) {
+      placeholder.textContent = "Aucun corridor configuré";
+      return;
+    }
+    result.data.forEach(function(corridor) {
+      const option = document.createElement("option");
+      option.value = corridor.id;
+      option.textContent = corridor.origin_label + " → " + corridor.destination_label +
+        (corridor.is_active ? " · actif" : " · en préparation, publication bloquée");
+      select.appendChild(option);
+    });
+    placeholder.textContent = "Choisissez un corridor";
+  } catch {
+    placeholder.textContent = "Corridors indisponibles pour le moment";
+  }
+}
+
 // Recherche connectée : seules les offres publiées sur un corridor actif sont affichées.
 // Si le backend est configuré mais indisponible, ne jamais présenter les exemples fictifs comme réels.
 (function initPublishedTripSearch() {
@@ -309,3 +344,9 @@ document.querySelectorAll(".corridor-card").forEach(function (button) {
     document.querySelector("#resultats")?.scrollIntoView({behavior:"smooth",block:"start"});
   }, true);
 })();
+
+
+if (window.JOTCOLIS_SUPABASE) {
+  loadTripCorridors();
+  window.JOTCOLIS_SUPABASE.auth.onAuthStateChange(function() { loadTripCorridors(); });
+}
