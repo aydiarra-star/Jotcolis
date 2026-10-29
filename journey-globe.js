@@ -239,7 +239,7 @@
       context.globalAlpha = alpha;
       context.beginPath();
       context.arc(point.x, point.y, dot.size, 0, Math.PI * 2);
-      context.fillStyle = dot.shimmer > .82 ? "#f0d394" : "#91c3c8";
+      context.fillStyle = dot.shimmer > .82 ? "#f47721" : "#ff9a52";
       context.fill();
     }
     context.restore();
@@ -266,9 +266,9 @@
     context.shadowColor = "rgba(255, 210, 112, .95)";
     context.shadowBlur = 16;
     const metal = context.createLinearGradient(-13, -7, 13, 7);
-    metal.addColorStop(0, "#fff0bf");
-    metal.addColorStop(.48, "#e2bd6e");
-    metal.addColorStop(1, "#b58543");
+    metal.addColorStop(0, "#fff0e3");
+    metal.addColorStop(.48, "#f47721");
+    metal.addColorStop(1, "#c65308");
     context.fillStyle = metal;
     context.beginPath();
     context.moveTo(13, 0);
@@ -304,7 +304,7 @@
     const point = project(city.longitude, city.latitude);
     if (point.depth < .06) return;
     const isParis = city.color === "gold";
-    const tint = isParis ? "#f4d78f" : "#8fe2d8";
+    const tint = isParis ? "#ff9a52" : "#f47721";
     const pulse = .5 + (Math.sin(now / 360 + (isParis ? 0 : 1.4)) + 1) * .18;
     context.save();
     context.globalAlpha = pulse;
@@ -325,14 +325,14 @@
     context.fill();
     context.beginPath();
     context.arc(point.x, point.y, 1, 0, Math.PI * 2);
-    context.fillStyle = "#fff9e9";
+    context.fillStyle = "#fffaf6";
     context.fill();
     context.font = "700 8px ui-sans-serif, system-ui, sans-serif";
     context.textBaseline = "middle";
     context.textAlign = "left";
     context.shadowBlur = 6;
     context.shadowColor = "rgba(0, 0, 0, .9)";
-    context.fillStyle = isParis ? "#fff0bd" : "#b2f2e5";
+    context.fillStyle = isParis ? "#fff0e3" : "#ffdfbd";
     context.fillText(city.name, point.x + 10, point.y - 1);
     context.restore();
   }
@@ -365,10 +365,10 @@
     context.clip();
 
     const ocean = context.createRadialGradient(cx - radius * .36, cy - radius * .39, radius * .03, cx, cy, radius * 1.12);
-    ocean.addColorStop(0, "#17384b");
-    ocean.addColorStop(.45, "#0e2a3d");
-    ocean.addColorStop(.8, "#0a1c2c");
-    ocean.addColorStop(1, "#071320");
+    ocean.addColorStop(0, "#fff0e3");
+    ocean.addColorStop(.45, "#fffaf6");
+    ocean.addColorStop(.8, "#fff5ed");
+    ocean.addColorStop(1, "#fffaf6");
     context.fillStyle = ocean;
     context.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
 
