@@ -82,3 +82,13 @@ test("connected search queries only future published trips on active corridors",
   assert.match(js, /Aucun exemple fictif n’est présenté comme une offre réelle/);
   assert.match(js, /Réservation non activée/);
 });
+
+
+test("brand system stays orange, black and white with accessible mobile motion and focus states", () => {
+  assert.match(css, /--teal:#f47721/);
+  assert.match(css, /--ink:#171717/);
+  assert.match(css, /--white:#ffffff/);
+  assert.match(css, /\.mobile-bottom-nav a\{min-height:48px\}/);
+  assert.match(css, /prefers-reduced-motion:reduce/);
+  assert.match(css, /button:focus-visible/);
+});
