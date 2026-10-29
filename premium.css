@@ -153,3 +153,26 @@ input,select{height:46px}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+/* Navigation fiable : les cibles restent visibles au-dessus de la barre fixe. */
+main section[id], main form[id], main .section[id] { scroll-margin-top: 22px; }
+#suivi-colis, #resultats, #publier, #compte { scroll-margin-bottom: 110px; }
+.mobile-bottom-nav { z-index: 1000; }
+.mobile-bottom-nav a { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.mobile-bottom-nav a:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+@media(max-width:700px) {
+  h1 { font-size: clamp(32px, 8.4vw, 39px); line-height: 1.08; letter-spacing: -.048em; }
+  .hero { padding-top: 30px; padding-bottom: 24px; gap: 20px; }
+  .hero-description { font-size: 15px; line-height: 1.62; }
+  .eyebrow { font-size: 11px; letter-spacing: .075em; }
+  .card-heading h2 { font-size: 19px; }
+  label { font-size: 13px; }
+  input, select, .input-wrap input { font-size: 15px; }
+  .form-note, .account-note, .results-disclaimer, .corridors-note { font-size: 12px; line-height: 1.6; }
+  .mobile-bottom-nav { bottom: max(8px, env(safe-area-inset-bottom)); padding: 5px; }
+  .mobile-bottom-nav a { min-height: 49px; font-size: 11px; }
+}
+@media(max-width:380px) {
+  h1 { font-size: 31px; }
+  .mobile-bottom-nav a { font-size: 10px; }
+}
