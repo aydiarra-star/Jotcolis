@@ -1,0 +1,13 @@
+{
+  "name": "jotcolis",
+  "version": "0.1.0",
+  "private": true,
+  "description": "JotColis — frontend prototype and deployable static preview",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
