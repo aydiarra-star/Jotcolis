@@ -118,14 +118,6 @@ if (tripForm && tripFeedback) {
       localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(saved));
       tripFeedback.textContent = "Trajet fictif ajouté dans ce navigateur seulement. Aucun autre utilisateur ne le voit.";
       tripForm.reset(); document.querySelector("#trip-capacity").value = "5"; renderTrips();
-    } catch { tripFeedback.textContent = "Enregistrement local indisponible. Aucun trajet n’a été publié en ligne."; }
-  });
-}
-renderTrips();
-    } catch { tripFeedback.textContent = "Enregistrement local indisponible. Aucun trajet n’a été publié en ligne."; }
-  });
-}
-renderTrips();
 
 
 // Navigation mobile : conserve un état actif lisible après chaque sélection.
