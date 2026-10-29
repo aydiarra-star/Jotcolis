@@ -6,9 +6,9 @@ Statut au 29 octobre 2026 : projet Supabase JotColis distinct créé et schéma 
 
 Le projet Supabase **JotColis** est distinct de Dekk Food : référence `rzezmtahqrxiivdjfajo`, région Paris (`eu-west-3`), URL `https://rzezmtahqrxiivdjfajo.supabase.co`. Le tarif affiché lors de la création était de 0 $/mois ; les limites et éventuels usages additionnels doivent être surveillés. **Dekk Food n’a pas été modifié.** Ne jamais mettre une clé `service_role` dans le frontend ou le dépôt.
 
-## Migration SQL préparée (non exécutée)
+## État des migrations SQL
 
-Un premier brouillon de schéma est versionné dans `supabase/migrations/202610280001_initial_schema_draft.sql`. Il comprend les tables de base, contraintes, index, RLS et permissions initiales. Il n’a été ni appliqué ni validé sur un projet Supabase : il faut le relire et le tester dans un projet JotColis séparé avant toute exécution. Les réservations et changements de capacité restent volontairement sans écriture directe côté client ; ils devront être implémentés via des fonctions serveur transactionnelles.
+Le schéma métier de base est installé sur le projet Supabase JotColis. Le fichier `202610280001_initial_schema_draft.sql` reste un brouillon historique à réconcilier avec l’état réel du projet. La migration `202610290001_seed_international_corridors.sql` ajoute les corridors France, Espagne, Italie, États-Unis et Émirats arabes unis vers/depuis le Sénégal, tous désactivés par défaut. Les réservations et changements de capacité restent sans écriture directe côté client et devront passer par des fonctions serveur transactionnelles.
 
 ## Première tranche backend
 
@@ -38,9 +38,9 @@ Un premier brouillon de schéma est versionné dans `supabase/migrations/2026102
 
 ## Ordre de réalisation
 
-1. Créer et valider un projet Supabase JotColis distinct, après confirmation du coût.
-2. Écrire la migration versionnée avec contraintes, index, RLS et politiques minimales.
-3. Tester les politiques avec utilisateurs expéditeur/GP/destinataire distincts.
+1. [x] Créer le projet Supabase JotColis distinct et installer le schéma métier de base.
+2. [x] Préparer les corridors internationaux en base, désactivés par défaut.
+3. Tester et finaliser les politiques avec des comptes expéditeur/GP/destinataire distincts.
 4. Connecter le frontend avec l’URL et la clé publishable par variables d’environnement.
 5. Implémenter comptes et profils, puis publication/recherche de trajets.
 6. Ajouter demandes et réservations transactionnelles.
