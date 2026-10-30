@@ -72,6 +72,7 @@ La prévisualisation applique une direction « grand voyage » en bleu nuit, or 
 
 - Les pictogrammes importants (itinéraire, colis, recherche, confiance et avion) sont des SVG dégradés avec relief, lisibles à toutes les tailles.
 - Le globe de l’accueil utilise une projection sphérique Canvas, que l’on peut faire pivoter au doigt ou à la souris ; des commandes permettent aussi de le tourner et de le recentrer.
+- Le globe est rendu strictement en noir et blanc : océan blanc, continents noirs et trames blanches, sans aucune teinte chaude. L’avion est signalé par un insigne bicolore (disque noir liseré de blanc, avion blanc orienté selon le cap) qui reste lisible aussi bien au-dessus de l’océan que des continents ; il est dessiné en dernier pour rester au premier plan.
 - L’avion alterne entre Paris et Dakar avec de courtes escales. Cette animation est décorative, explicitement signalée comme démonstration et ne représente ni un vol réel ni une position GPS.
 - La mise en page conserve les formulaires et navigations existants, s’adapte aux écrans étroits et respecte `prefers-reduced-motion`.
 

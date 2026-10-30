@@ -168,3 +168,16 @@ test("premium experience keeps the existing app actions and adds a self-containe
   assert.match(buildScript, /experience\.css/);
   assert.match(buildScript, /journey-globe\.js/);
 });
+
+test("globe canvas stays strictly black and white and keeps a highly visible flight marker", () => {
+  // Aucune teinte chaude ne doit subsister dans le rendu Canvas du globe.
+  for (const warmTone of ["#f47721", "#df5d0b", "#c65308", "#fd9448", "#fff0e3", "#fffaf6", "#fff5ed"]) {
+    assert.ok(!globeJs.toLowerCase().includes(warmTone), `${warmTone} ne doit plus colorer le globe`);
+  }
+  assert.match(globeJs, /const INK = "#0b0b0b"/);
+  assert.match(globeJs, /const PAPER = "#ffffff"/);
+  assert.match(globeJs, /function drawFlightBadge/);
+  assert.match(globeJs, /function tracePlane/);
+  // L’insigne de vol est dessiné en dernier pour rester au premier plan.
+  assert.ok(globeJs.lastIndexOf("drawFlightBadge(flight, now);") > globeJs.lastIndexOf("drawCity(DAKAR"));
+});
