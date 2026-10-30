@@ -19,6 +19,25 @@
   const STOP_TIME = 1800;
   const FLIGHT_CYCLE = (TRAVEL_TIME + STOP_TIME) * 2;
 
+  // Le globe est rendu strictement en noir et blanc : aucune teinte chaude.
+  const INK = "#0b0b0b";
+  const PAPER = "#ffffff";
+  const INK_LINE = "rgba(11, 11, 11, .78)";
+  const PAPER_LINE = "rgba(255, 255, 255, .92)";
+
+  // Silhouette d’avion de ligne (nez vers la droite) : tracé reconnaissable
+  // même réduit à quelques pixels dans l’insigne de vol.
+  const PLANE_OUTLINE = [
+    [-5.4, 12.83], [-2.7, 12.83], [4.05, 2.03], [11.48, 2.03], [11.8, 2],
+    [12.12, 1.92], [12.41, 1.8], [12.67, 1.63], [12.91, 1.43], [13.11, 1.2],
+    [13.27, .93], [13.4, .64], [13.47, .33], [13.5, 0], [13.47, -.33],
+    [13.4, -.64], [13.27, -.93], [13.11, -1.2], [12.91, -1.43], [12.67, -1.63],
+    [12.41, -1.8], [12.12, -1.92], [11.8, -2], [11.48, -2.03], [4.05, -2.03],
+    [-2.7, -12.83], [-5.4, -12.83], [-2.03, -2.03], [-9.45, -2.03],
+    [-11.48, -4.73], [-13.5, -4.73], [-12.15, 0], [-13.5, 4.73],
+    [-11.48, 4.73], [-9.45, 2.03], [-2.03, 2.03]
+  ];
+
   // Simplified coastlines: intentionally stylised, not a navigational map.
   const LAND_POLYGONS = [
     [[-17, 37], [-9, 36], [-3, 36], [4, 36], [10, 37], [13, 33], [20, 33], [27, 32], [34, 29], [37, 21], [43, 12], [42, 3], [40, -2], [40, -11], [35, -17], [31, -25], [27, -33], [19, -35], [12, -34], [8, -29], [3, -21], [1, -11], [-5, -3], [-9, 4], [-14, 10], [-17, 15], [-16, 21], [-12, 25], [-17, 29], [-13, 33], [-17, 37]],
@@ -181,12 +200,12 @@
     for (let latitude = -60; latitude <= 60; latitude += 30) {
       const points = [];
       for (let longitude = -180; longitude <= 180; longitude += 3) points.push({ longitude, latitude });
-      strokeVisibleLine(points, latitude === 0 ? "rgba(255, 240, 227, .21)" : "rgba(255, 240, 227, .14)", latitude === 0 ? .8 : .55);
+      strokeVisibleLine(points, latitude === 0 ? "rgba(11, 11, 11, .17)" : "rgba(11, 11, 11, .1)", latitude === 0 ? .75 : .5);
     }
     for (let longitude = -180; longitude < 180; longitude += 30) {
       const points = [];
       for (let latitude = -87; latitude <= 87; latitude += 3) points.push({ longitude, latitude });
-      strokeVisibleLine(points, "rgba(255, 240, 227, .13)", .55);
+      strokeVisibleLine(points, "rgba(11, 11, 11, .09)", .5);
     }
   }
 
@@ -201,10 +220,10 @@
     }
     context.save();
     context.beginPath();
-    context.strokeStyle = "rgba(244, 119, 33, .48)";
-    context.lineWidth = .9;
-    context.shadowColor = "rgba(244, 119, 33, .25)";
-    context.shadowBlur = 4;
+    context.strokeStyle = "rgba(11, 11, 11, .92)";
+    context.lineWidth = .85;
+    context.shadowColor = "rgba(11, 11, 11, 0)";
+    context.shadowBlur = 0;
     let drawing = false;
     for (const point of projected) {
       if (point.depth > .025) {
@@ -224,31 +243,45 @@
     const landGradient = context.createLinearGradient(
       state.width * .22, state.height * .2, state.width * .77, state.height * .82
     );
-    landGradient.addColorStop(0, "rgba(223, 93, 11, .52)");
-    landGradient.addColorStop(.48, "rgba(244, 119, 33, .44)");
-    landGradient.addColorStop(1, "rgba(198, 83, 8, .42)");
+    landGradient.addColorStop(0, "rgba(11, 11, 11, .95)");
+    landGradient.addColorStop(.48, INK);
+    landGradient.addColorStop(1, "rgba(11, 11, 11, .88)");
     context.fillStyle = landGradient;
     for (const polygon of LAND_POLYGONS) tracePolygon(polygon, true);
 
-    const shimmer = .75 + Math.sin(now / 1450) * .12;
+    // Trame de points blancs : la texture reste lisible sur les masses noires.
+    const shimmer = .72 + Math.sin(now / 1450) * .1;
     context.save();
     for (const dot of landDots) {
       const point = project(dot.longitude, dot.latitude);
       if (point.depth < .04) continue;
-      const alpha = Math.min(.72, (.28 + point.depth * .35) * shimmer * (.62 + dot.shimmer * .44));
+      const alpha = Math.min(.4, (.12 + point.depth * .26) * shimmer);
       context.globalAlpha = alpha;
       context.beginPath();
-      context.arc(point.x, point.y, dot.size, 0, Math.PI * 2);
-      context.fillStyle = dot.shimmer > .82 ? "#f47721" : "#df5d0b";
+      context.arc(point.x, point.y, dot.size * .92, 0, Math.PI * 2);
+      context.fillStyle = PAPER;
       context.fill();
     }
     context.restore();
   }
 
-  function drawRoute(flight) {
-    strokeVisibleLine(route, "rgba(244, 119, 33, .2)", 3.4, 8);
-    strokeVisibleLine(route, "rgba(223, 93, 11, .78)", 1.25, 5);
+  function tracePlane(scale) {
+    context.beginPath();
+    context.moveTo(PLANE_OUTLINE[0][0] * scale, PLANE_OUTLINE[0][1] * scale);
+    for (let index = 1; index < PLANE_OUTLINE.length; index += 1) {
+      context.lineTo(PLANE_OUTLINE[index][0] * scale, PLANE_OUTLINE[index][1] * scale);
+    }
+    context.closePath();
+  }
 
+  function drawRouteLine() {
+    // Liseré blanc sous le tracé : la route noire reste lisible sur l’océan
+    // comme sur les continents noirs.
+    strokeVisibleLine(route, PAPER_LINE, 3.6, 0);
+    strokeVisibleLine(route, INK_LINE, 1.5, 0);
+  }
+
+  function drawFlightBadge(flight, now) {
     const position = greatCirclePoint(PARIS, DAKAR, flight.routeAmount);
     const point = project(position.longitude, position.latitude);
     if (point.depth <= .025) return;
@@ -260,80 +293,81 @@
     let angle = Math.atan2(nextPoint.y - previousPoint.y, nextPoint.x - previousPoint.x);
     if (flight.label === "Dakar → Paris" || flight.label === "Escale à Paris") angle += Math.PI;
 
-    context.save();
-    context.translate(point.x, point.y);
-    context.rotate(angle);
-    context.shadowColor = "rgba(223, 93, 11, .95)";
-    context.shadowBlur = 16;
-    const metal = context.createLinearGradient(-13, -7, 13, 7);
-    metal.addColorStop(0, "#fff0e3");
-    metal.addColorStop(.48, "#f47721");
-    metal.addColorStop(1, "#c65308");
-    context.fillStyle = metal;
-    context.beginPath();
-    context.moveTo(13, 0);
-    context.lineTo(1, 2.1);
-    context.lineTo(-4.7, 8);
-    context.lineTo(-6.2, 7.7);
-    context.lineTo(-3.5, 2.2);
-    context.lineTo(-10, 1.3);
-    context.lineTo(-12.7, 4.1);
-    context.lineTo(-14, 3.5);
-    context.lineTo(-12, -.4);
-    context.lineTo(-13.1, -2.4);
-    context.lineTo(-10, -2.5);
-    context.lineTo(-3.5, -1.9);
-    context.lineTo(-6.1, -7.6);
-    context.lineTo(-4.8, -8.2);
-    context.lineTo(1, -2.2);
-    context.closePath();
-    context.fill();
-    context.restore();
+    const breathing = (Math.sin(now / 520) + 1) / 2;
+    const badgeRadius = 18 + breathing * .9;
 
     context.save();
+    context.translate(point.x, point.y);
+    context.lineJoin = "round";
+    context.lineCap = "round";
+
+    // Insigne bicolore : disque noir liseré de blanc. Ce contraste inversé
+    // garde l’avion parfaitement visible sur l’océan blanc comme sur les
+    // continents noirs, sans jamais dépendre de la couleur de fond.
     context.beginPath();
-    context.arc(point.x, point.y, 3.3, 0, Math.PI * 2);
-    context.fillStyle = "rgba(255, 240, 227, .86)";
-    context.shadowColor = "rgba(244, 119, 33, .9)";
-    context.shadowBlur = 13;
+    context.arc(0, 0, badgeRadius + 1.8, 0, Math.PI * 2);
+    context.fillStyle = PAPER;
+    context.shadowColor = "rgba(11, 11, 11, .34)";
+    context.shadowBlur = 7;
+    context.fill();
+    context.shadowBlur = 0;
+
+    context.beginPath();
+    context.arc(0, 0, badgeRadius, 0, Math.PI * 2);
+    context.fillStyle = INK;
+    context.fill();
+
+    // Avion blanc orienté selon le cap réel du vol.
+    context.rotate(angle);
+    context.fillStyle = PAPER;
+    tracePlane(.94);
     context.fill();
     context.restore();
   }
 
-  function drawCity(city, now) {
+  function drawCity(city, now, planePoint) {
     const point = project(city.longitude, city.latitude);
     if (point.depth < .06) return;
     const isParis = city.color === "gold";
-    const tint = isParis ? "#df5d0b" : "#f47721";
     const pulse = .5 + (Math.sin(now / 360 + (isParis ? 0 : 1.4)) + 1) * .18;
+    // Près de l’avion (au départ comme à l’escale), le nom s’écarte pour rester lisible.
+    const nearPlane = Boolean(planePoint) && Math.hypot(planePoint.x - point.x, planePoint.y - point.y) < 30;
+    const labelOffset = nearPlane ? 27 : 10;
+
+    // Anneau pulsé bicolore : le liseré noir se voit sur l’océan blanc, le halo
+    // blanc se voit sur les continents noirs.
     context.save();
-    context.globalAlpha = pulse;
+    context.globalAlpha = pulse * .75;
     context.beginPath();
-    context.arc(point.x, point.y, 7.1, 0, Math.PI * 2);
-    context.strokeStyle = tint;
-    context.lineWidth = .7;
-    context.shadowColor = tint;
-    context.shadowBlur = 13;
+    context.arc(point.x, point.y, 7.2, 0, Math.PI * 2);
+    context.strokeStyle = INK;
+    context.lineWidth = .9;
+    context.shadowColor = "rgba(255, 255, 255, .95)";
+    context.shadowBlur = 8;
     context.stroke();
     context.restore();
+
+    // Point blanc cerclé de noir : lisible aussi bien sur l’océan que sur la terre.
     context.save();
     context.beginPath();
-    context.arc(point.x, point.y, 2.8, 0, Math.PI * 2);
-    context.fillStyle = tint;
-    context.shadowColor = tint;
-    context.shadowBlur = 12;
+    context.arc(point.x, point.y, 3.2, 0, Math.PI * 2);
+    context.fillStyle = PAPER;
     context.fill();
-    context.beginPath();
-    context.arc(point.x, point.y, 1, 0, Math.PI * 2);
-    context.fillStyle = "#fffaf6";
-    context.fill();
+    context.lineWidth = 1.2;
+    context.strokeStyle = INK;
+    context.stroke();
+    context.restore();
+
+    context.save();
     context.font = "700 8px ui-sans-serif, system-ui, sans-serif";
     context.textBaseline = "middle";
     context.textAlign = "left";
-    context.shadowBlur = 6;
-    context.shadowColor = "rgba(36, 35, 38, .9)";
-    context.fillStyle = isParis ? "#fff0e3" : "#df5d0b";
-    context.fillText(city.name, point.x + 10, point.y - 1);
+    context.lineJoin = "round";
+    context.strokeStyle = "rgba(11, 11, 11, .82)";
+    context.lineWidth = 2.6;
+    context.strokeText(city.name, point.x + labelOffset, point.y - 1);
+    context.fillStyle = PAPER;
+    context.fillText(city.name, point.x + labelOffset, point.y - 1);
     context.restore();
   }
 
@@ -352,10 +386,10 @@
     context.save();
     context.beginPath();
     context.arc(cx, cy, radius + 1.5, 0, Math.PI * 2);
-    context.strokeStyle = "rgba(223, 93, 11, .62)";
-    context.lineWidth = 1.1;
-    context.shadowColor = "rgba(244, 119, 33, .35)";
-    context.shadowBlur = 14;
+    context.strokeStyle = "rgba(11, 11, 11, .26)";
+    context.lineWidth = 1;
+    context.shadowColor = "rgba(11, 11, 11, .14)";
+    context.shadowBlur = 12;
     context.stroke();
     context.restore();
 
@@ -365,41 +399,46 @@
     context.clip();
 
     const ocean = context.createRadialGradient(cx - radius * .36, cy - radius * .39, radius * .03, cx, cy, radius * 1.12);
-    ocean.addColorStop(0, "#fff0e3");
-    ocean.addColorStop(.45, "#fffaf6");
-    ocean.addColorStop(.8, "#fff5ed");
-    ocean.addColorStop(1, "#fffaf6");
+    ocean.addColorStop(0, "#ffffff");
+    ocean.addColorStop(.45, "#fdfdfd");
+    ocean.addColorStop(.8, "#f8f8f8");
+    ocean.addColorStop(1, "#eeeeee");
     context.fillStyle = ocean;
     context.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
 
     const surfaceLight = context.createRadialGradient(cx - radius * .34, cy - radius * .38, radius * .04, cx, cy, radius * 1.06);
-    surfaceLight.addColorStop(0, "rgba(255, 240, 227, .13)");
-    surfaceLight.addColorStop(.58, "rgba(255, 240, 227, .045)");
-    surfaceLight.addColorStop(1, "rgba(255, 240, 227, .69)");
+    surfaceLight.addColorStop(0, "rgba(255, 255, 255, .55)");
+    surfaceLight.addColorStop(.58, "rgba(255, 255, 255, 0)");
+    surfaceLight.addColorStop(1, "rgba(11, 11, 11, .1)");
     context.fillStyle = surfaceLight;
     context.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
 
     drawGraticule();
     drawContinents(now);
-    drawRoute(flight);
-    drawCity(PARIS, now);
-    drawCity(DAKAR, now);
+    drawRouteLine();
+    const flightPosition = greatCirclePoint(PARIS, DAKAR, flight.routeAmount);
+    const planePoint = project(flightPosition.longitude, flightPosition.latitude);
+    drawCity(PARIS, now, planePoint);
+    drawCity(DAKAR, now, planePoint);
+    // L’insigne de vol passe en dernier : l’avion reste toujours au premier
+    // plan, et le nom de la ville se décale lorsqu’il le recouvre.
+    drawFlightBadge(flight, now);
     context.restore();
 
     // Fine glass rim and the atmospheric lower edge.
     context.save();
     const rim = context.createRadialGradient(cx - radius * .33, cy - radius * .36, radius * .67, cx, cy, radius * 1.02);
-    rim.addColorStop(0, "rgba(0, 0, 0, 0)");
-    rim.addColorStop(.83, "rgba(255, 240, 227, .08)");
-    rim.addColorStop(1, "rgba(244, 119, 33, .17)");
+    rim.addColorStop(0, "rgba(11, 11, 11, 0)");
+    rim.addColorStop(.83, "rgba(11, 11, 11, .02)");
+    rim.addColorStop(1, "rgba(11, 11, 11, .16)");
     context.beginPath();
     context.arc(cx, cy, radius, 0, Math.PI * 2);
     context.fillStyle = rim;
     context.fill();
     context.beginPath();
     context.arc(cx, cy, radius - .4, 0, Math.PI * 2);
-    context.strokeStyle = "rgba(255, 240, 227, .22)";
-    context.lineWidth = .65;
+    context.strokeStyle = "rgba(11, 11, 11, .55)";
+    context.lineWidth = .8;
     context.stroke();
     context.restore();
   }
