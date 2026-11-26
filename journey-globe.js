@@ -294,7 +294,8 @@
     if (flight.label === "Dakar → Paris" || flight.label === "Escale à Paris") angle += Math.PI;
 
     const breathing = (Math.sin(now / 520) + 1) / 2;
-    const badgeRadius = 18 + breathing * .9;
+    const baseBadgeRadius = Math.max(12.5, Math.min(18, state.radius * .15));
+    const badgeRadius = baseBadgeRadius + breathing * .7;
 
     context.save();
     context.translate(point.x, point.y);
@@ -305,7 +306,7 @@
     // garde l’avion parfaitement visible sur l’océan blanc comme sur les
     // continents noirs, sans jamais dépendre de la couleur de fond.
     context.beginPath();
-    context.arc(0, 0, badgeRadius + 1.8, 0, Math.PI * 2);
+    context.arc(0, 0, badgeRadius + 1.6, 0, Math.PI * 2);
     context.fillStyle = PAPER;
     context.shadowColor = "rgba(11, 11, 11, .34)";
     context.shadowBlur = 7;
@@ -320,7 +321,7 @@
     // Avion blanc orienté selon le cap réel du vol.
     context.rotate(angle);
     context.fillStyle = PAPER;
-    tracePlane(.94);
+    tracePlane((badgeRadius / 18) * .94);
     context.fill();
     context.restore();
   }
