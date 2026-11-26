@@ -146,12 +146,16 @@ function createMockClient({ session = null, rpcHandlers = {}, tables = {}, error
 }
 
 async function createEnvironment(options = {}) {
+  const { url = "https://jotcolis.example.test/#accueil", globals = {}, ...mockOptions } = options;
   const dom = new JSDOM(html, {
-    url: "https://jotcolis.example.test/#accueil",
+    url,
     runScripts: "outside-only",
     pretendToBeVisual: true,
   });
   const { window } = dom;
+  Object.entries(globals).forEach(function ([key, value]) {
+    Object.defineProperty(window, key, { configurable: true, writable: true, value });
+  });
   window.scrollTo = () => {};
   window.requestAnimationFrame = (callback) => setTimeout(callback, 0);
   window.cancelAnimationFrame = (id) => clearTimeout(id);
@@ -162,7 +166,7 @@ async function createEnvironment(options = {}) {
     value: { randomUUID: () => randomUUID() },
   });
 
-  const mock = createMockClient(options);
+  const mock = createMockClient(mockOptions);
   window.supabase = { createClient: () => mock.client };
   window.eval(configJs);
   window.eval(appJs);
@@ -422,4 +426,62 @@ test("administrateur : états serveur visibles, déclaration sans activation aut
   assert.equal(providerCall.args.p_configured, true);
   assert.doesNotMatch(JSON.stringify(providerCall.args), /sb_secret|service_role|Bearer/i);
   assert.match(document.querySelector("#dashboard-feedback").textContent, /Aucun canal n’a été activé/);
+});
+
+
+test("environnement : une prévisualisation n'affiche jamais « production » même avec un flag explicite", async () => {
+  const env = await createEnvironment({
+    url: "https://8000-sandbox.e2b.app/#accueil",
+    globals: { JOTCOLIS_ENV: "production" },
+    session: makeSession(),
+    rpcHandlers: { get_my_state: () => me },
+  });
+  const { window, document } = env;
+  await flush();
+  assert.equal(window.JOTCOLIS_CONFIG.environment.mode, "preview");
+  assert.equal(window.JOTCOLIS_CONFIG.environment.reason, "hote_preview");
+  assert.doesNotMatch(document.querySelector("#dashboard-root").textContent, /Production/);
+  assert.match(document.querySelector("#dashboard-root").textContent, /Prévisualisation \/ préproduction/);
+});
+
+test("environnement : développement local et production déclarée sur liste blanche", async () => {
+  const local = await createEnvironment({ url: "http://localhost:8000/#accueil" });
+  assert.equal(local.window.JOTCOLIS_CONFIG.environment.mode, "development");
+  const declared = await createEnvironment({
+    url: "https://app.jotcolis.example/#accueil",
+    globals: {
+      JOTCOLIS_ENV: "production",
+      JOTCOLIS_PRODUCTION_HOSTNAMES: ["app.jotcolis.example"],
+    },
+  });
+  assert.equal(declared.window.JOTCOLIS_CONFIG.environment.mode, "production");
+  assert.equal(declared.window.JOTCOLIS_CONFIG.environment.reason, "flag_et_hote_production_autorises");
+  const refused = await createEnvironment({
+    url: "https://app.jotcolis.example/#accueil",
+    globals: { JOTCOLIS_ENV: "production" },
+  });
+  assert.equal(refused.window.JOTCOLIS_CONFIG.environment.mode, "preview");
+  assert.equal(refused.window.JOTCOLIS_CONFIG.environment.reason, "production_refusee_sans_liste_blanche");
+});
+
+test("migrations absentes : erreurs PostgREST explicitement expliquées, formulaires désactivés, aucune donnée fictive", async () => {
+  const migrationError = {
+    code: "PGRST202",
+    message: "Could not find the function public.get_my_state() in the schema cache",
+    details: null,
+    hint: null,
+  };
+  const env = await createEnvironment({
+    session: makeSession(),
+    errors: { get_my_state: migrationError },
+  });
+  const { document, calls } = env;
+  await flush();
+  assert.ok(calls.rpc.some((call) => call.name === "get_my_state"));
+  assert.match(document.querySelector("#dashboard-root").textContent, /migrations JotColis ne sont pas appliquées/i);
+  assert.match(document.querySelector("#auth-status").textContent, /migrations JotColis ne sont pas appliquées/i);
+  assert.ok(!calls.tables.includes("platform_config"));
+  assert.equal(document.querySelector("#signup-form button[type=submit]").disabled, true);
+  assert.equal(document.querySelector("#signin-form button[type=submit]").disabled, true);
+  assert.doesNotMatch(document.querySelector("#dashboard-root").innerHTML, /JC-EXEMPLE|Paris.*Dakar.*12 kg/);
 });

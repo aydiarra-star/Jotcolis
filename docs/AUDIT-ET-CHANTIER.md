@@ -4,6 +4,8 @@ Date du rapport : 2026-11-26 (UTC). Branche : `arena/b65591cf-jotcolis`, base `b
 
 > **Addendum du 26 novembre 2026** : ce rapport décrit l'état de la première phase, avec 39 tests locaux. La phase 2 a ensuite corrigé l'activation des notifications, les états prestataires, les claims ambigus, l'exposition de `platform_config` et l'idempotence de certaines fonctions ; elle porte la suite à 52 tests. Les résultats et limites actualisés sont dans [AUDIT-PHASE-2.md](AUDIT-PHASE-2.md). La conclusion reste `NON PRÊT`. Les chiffres « 39 tests » ci-dessous sont historiques et ne doivent pas être lus comme l'état courant.
 
+> **Addendum final** : la clôture technique est documentée dans [AUDIT-FINAL.md](AUDIT-FINAL.md) et les limites Free dans [SUPABASE-FREE.md](SUPABASE-FREE.md). Aucun chiffre de test de ce rapport historique ne décrit l'état courant.
+
 ## 1. État initial vérifié
 
 Le dépôt était propre, sans commit supplémentaire sur la branche. `main` correspondait au merge de la PR #9 ; la PR #2 documentaire était encore ouverte. Le projet consistait en un site statique sans dépendance runtime : `index.html`, `app.js`, `styles.css`, `premium.css`, `experience.css`, `journey-globe.js`, `supabase-config.js`, six migrations SQL de brouillon et trois fichiers de tests statiques. Le build copiait sept fichiers dans `dist/`. La CI s'exécutait sur `main` et `feature/fondations-jotcolis`, pas sur la branche de chantier. `render.yaml` décrivait un blueprint statique `jotcolis-preview` avec previews automatiques ; ce n'est pas la preuve de la configuration du service officiel `srv-dbhq75gn74is73eog6sg`.

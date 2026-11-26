@@ -647,6 +647,10 @@ describe("JotColis — intégration PostgreSQL locale (PGlite, données de test 
     assert.match(source, /Deno\.env\.get\("SUPABASE_SERVICE_ROLE_KEY"\)/);
     assert.match(source, /WhatsApp Cloud API/);
     assert.match(source, /response\.ok/);
+    assert.match(source, /createWorkerHandler/);
+    assert.match(source, /env\.get\("SUPABASE_SERVICE_ROLE_KEY"\)/);
+    assert.match(source, /validateClaimedNotification/);
+    assert.match(source, /import\.meta\.main/);
     assert.doesNotMatch(source, /sb_secret|sk_live|Bearer\s+[A-Za-z0-9._-]{20,}/i);
     assert.doesNotMatch(source, /localStorage/);
     assert.match(source, /Aucun message n'est marqué "sent" sans réponse HTTP 2xx/);

@@ -1,9 +1,9 @@
 import { PGlite } from "@electric-sql/pglite";
 import { readFile, readdir } from "node:fs/promises";
 
-const MIGRATIONS_DIR = new URL("../../supabase/migrations/", import.meta.url);
+export const MIGRATIONS_DIR = new URL("../../supabase/migrations/", import.meta.url);
 
-const SHIMS = `
+export const SHIMS = `
 do $shim$
 begin
   if not exists (select 1 from pg_roles where rolname = 'anon') then execute 'create role anon nologin'; end if;
@@ -44,26 +44,30 @@ create table if not exists storage.objects (
 );
 `;
 
-export async function createTestDatabase() {
+export async function applyMigrationFile(db, file) {
+  let sql = await readFile(new URL(file, MIGRATIONS_DIR), "utf8");
+  // PGlite n'embarque pas pgcrypto ; le code applicatif utilise uniquement
+  // les fonctions built-in pg_catalog (gen_random_uuid, sha256).
+  sql = sql.replace(/create extension if not exists pgcrypto;/gi, "");
+  try {
+    await db.exec(sql);
+  } catch (error) {
+    throw new Error(`Migration ${file} a échoué: ${error.message}`, { cause: error });
+  }
+}
+
+export async function createDatabaseWithMigrationFiles(files) {
   const db = new PGlite();
   await db.exec(SHIMS);
+  for (const file of files) await applyMigrationFile(db, file);
+  return db;
+}
 
+export async function createTestDatabase() {
   const files = (await readdir(MIGRATIONS_DIR))
     .filter((name) => name.endsWith(".sql"))
     .sort();
-
-  for (const file of files) {
-    let sql = await readFile(new URL(file, MIGRATIONS_DIR), "utf8");
-    // PGlite n'embarque pas pgcrypto ; le code applicatif utilise uniquement
-    // les fonctions built-in pg_catalog (gen_random_uuid, sha256).
-    sql = sql.replace(/create extension if not exists pgcrypto;/gi, "");
-    try {
-      await db.exec(sql);
-    } catch (error) {
-      throw new Error(`Migration ${file} a échoué: ${error.message}`, { cause: error });
-    }
-  }
-  return db;
+  return createDatabaseWithMigrationFiles(files);
 }
 
 export async function createUser(db, { id, email, confirmed = true, displayName = "Test" }) {

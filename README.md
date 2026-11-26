@@ -30,7 +30,7 @@ Ces services n'ont pas pu être vérifiés depuis ce chantier : aucun connecteur
 
 ## Développement local
 
-Prérequis : Node.js 20 ou supérieur.
+Prérequis : Node.js 22 recommandé en CI et en local (`engines` accepte encore `>=20`) ; Deno 2.9.6 est installé comme dépendance de développement pour les tests du worker, sans déploiement Edge.
 
 ```bash
 npm ci
@@ -38,19 +38,23 @@ npm test
 npm run build
 npm run test:sql
 npm run test:frontend
+npm run test:worker
 ```
 
-`npm test` exécute **52 tests / 52 réussis** : 22 assertions statiques d'architecture, de migrations et de code métier, 19 scénarios d'intégration SQL PGlite (12 historiques + 7 scénarios de fiabilité Phase 2), et 11 parcours jsdom avec un client Supabase simulé. `npm run test:sql` exécute **19 tests / 19 réussis** ; `npm run test:frontend` exécute **22 tests / 22 réussis** (11 assertions statiques + 11 parcours jsdom). Aucun test ne touche la base ou les utilisateurs réels. Le workflow GitHub Actions exécute les cinq commandes après `npm ci`. `npm run build` génère `dist/` avec le frontend, les styles, le globe, la couche plateforme, le rapport d'audit initial, le rapport Phase 2 et la documentation FREE. `dist/` et `node_modules/` sont ignorés par Git.
+`npm ci` installe 42 paquets et signale 0 vulnérabilité. `npm test` exécute **64 tests / 64 réussis** ; `npm run test:sql` **25 / 25** ; `npm run test:frontend` **27 / 27** ; `npm run test:worker` exécute `deno check`, `deno lint` et **15 scénarios Deno / 15 réussis** sans autorisation réseau. `npm run build` réussit et produit 13 fichiers dans `dist/`.
+
+Aucun test ne touche la base ou les utilisateurs réels. Le workflow GitHub Actions exécute `npm ci`, les quatre suites Node et le build, avec `actions/checkout@v6`, `actions/setup-node@v6` et Node.js 22. `npm run build` génère `dist/` avec le frontend, les styles, le globe, la couche plateforme, le rapport d'audit initial, le rapport Phase 2, le rapport final et la documentation FREE. `dist/` et `node_modules/` sont ignorés par Git.
 
 ## Configuration et secrets
 
-`supabase-config.js` contient uniquement l'URL publique et la clé publishable du navigateur. Aucune clé `service_role`, aucun secret de prestataire et aucun token ne doivent être committés. Les noms de variables serveur attendus sont documentés dans `.env.example`. Le premier administrateur doit être créé par une opération privilégiée `bootstrap_first_admin`, jamais depuis le navigateur.
+`supabase-config.js` contient uniquement l'URL publique, la clé publishable et une détection structurée `development` / `preview` / `production`. Une prévisualisation n'est jamais affichée comme production ; le mode production exige un flag explicite et un hôte sur liste blanche. Aucune clé `service_role`, aucun secret de prestataire et aucun token ne doivent être committés. Les noms de variables serveur attendus sont documentés dans `.env.example`. Le premier administrateur doit être créé par une opération privilégiée `bootstrap_first_admin`, jamais depuis le navigateur.
 
 ## Documentation
 
 - [Audit, chantier et état réel — phase 1](docs/AUDIT-ET-CHANTIER.md) — document de référence.
 - [Audit, corrections et validation — phase 2](docs/AUDIT-PHASE-2.md) — rapport de fiabilisation.
-- [Contraintes Supabase FREE](docs/SUPABASE-FREE.md) — quotas, pause et limites de disponibilité.
+- [Audit final et clôture technique](docs/AUDIT-FINAL.md) — rapport de référence, statut `C`.
+- [Contraintes Supabase FREE](docs/SUPABASE-FREE.md) — quotas, pause, sauvegardes, restauration et limites de disponibilité.
 - [Prompt maître](docs/PROMPT-MAITRE.md), [cahier des charges](docs/CAHIER-DES-CHARGES.md), [architecture cible](docs/ARCHITECTURE.md), [plan backend et sécurité](docs/PLAN-BACKEND-MVP.md), [feuille de route](docs/ROADMAP.md), [parcours UX](docs/UX-PARCOURS.md), [identité visuelle](docs/IDENTITE-VISUELLE.md) — documents historiques de conception, à relire au regard de l'audit.
 - [Migrations SQL](supabase/migrations/) — six migrations historiques conservées, quatre migrations additives du chantier. À rapprocher de l'historique Supabase distant avant toute application.
 - [Prototype visuel historique](prototype/index.html).

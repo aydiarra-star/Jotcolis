@@ -416,14 +416,17 @@ alter table public.incident_evidence enable row level security;
 alter table public.booking_event_rules enable row level security;
 
 drop policy if exists profiles_select_own on public.profiles;
+drop policy if exists profiles_select_own on public.profiles;
 create policy profiles_select_own on public.profiles for select to authenticated
   using (id = auth.uid() or public.current_user_is_admin());
 drop policy if exists profiles_update_own on public.profiles;
 
 drop policy if exists corridors_read_active on public.corridors;
+drop policy if exists corridors_read_active on public.corridors;
 create policy corridors_read_active on public.corridors for select to anon, authenticated
   using (is_active = true or public.current_user_is_admin());
 
+drop policy if exists trips_read_published_or_owner on public.trips;
 drop policy if exists trips_read_published_or_owner on public.trips;
 create policy trips_read_published_or_owner on public.trips for select to anon, authenticated
   using (
@@ -436,6 +439,7 @@ create policy trips_read_published_or_owner on public.trips for select to anon, 
 drop policy if exists trips_insert_own_draft on public.trips;
 
 drop policy if exists parcel_requests_read_own on public.parcel_requests;
+drop policy if exists parcel_requests_read_own on public.parcel_requests;
 create policy parcel_requests_read_own on public.parcel_requests for select to authenticated
   using (
     sender_id = auth.uid()
@@ -447,9 +451,11 @@ create policy parcel_requests_read_own on public.parcel_requests for select to a
 drop policy if exists parcel_requests_insert_own on public.parcel_requests;
 
 drop policy if exists bookings_read_participants on public.bookings;
+drop policy if exists bookings_read_participants on public.bookings;
 create policy bookings_read_participants on public.bookings for select to authenticated
   using (sender_id = auth.uid() or gp_id = auth.uid() or public.current_user_is_admin());
 
+drop policy if exists passport_read_participants on public.passport_events;
 drop policy if exists passport_read_participants on public.passport_events;
 create policy passport_read_participants on public.passport_events for select to authenticated
   using (
@@ -466,6 +472,7 @@ create policy passport_read_participants on public.passport_events for select to
   );
 
 drop policy if exists incidents_read_participants on public.incidents;
+drop policy if exists incidents_read_participants on public.incidents;
 create policy incidents_read_participants on public.incidents for select to authenticated
   using (
     public.current_user_is_admin()
@@ -476,22 +483,31 @@ create policy incidents_read_participants on public.incidents for select to auth
   );
 drop policy if exists incidents_insert_participant on public.incidents;
 
+drop policy if exists user_roles_select_own_admin on public.user_roles;
 create policy user_roles_select_own_admin on public.user_roles for select to authenticated
   using (user_id = auth.uid() or public.current_user_is_admin());
+drop policy if exists gp_verifications_select_own_admin on public.gp_verifications;
 create policy gp_verifications_select_own_admin on public.gp_verifications for select to authenticated
   using (user_id = auth.uid() or public.current_user_is_admin());
+drop policy if exists gp_verification_events_select_own_admin on public.gp_verification_events;
 create policy gp_verification_events_select_own_admin on public.gp_verification_events for select to authenticated
   using (user_id = auth.uid() or public.current_user_is_admin());
+drop policy if exists verification_documents_select_own_admin on public.verification_documents;
 create policy verification_documents_select_own_admin on public.verification_documents for select to authenticated
   using (user_id = auth.uid() or public.current_user_is_admin());
+drop policy if exists trip_alerts_select_own_admin on public.trip_alerts;
 create policy trip_alerts_select_own_admin on public.trip_alerts for select to authenticated
   using (user_id = auth.uid() or public.current_user_is_admin());
+drop policy if exists notification_outbox_select_admin on public.notification_outbox;
 create policy notification_outbox_select_admin on public.notification_outbox for select to authenticated
   using (public.current_user_is_admin());
+drop policy if exists notification_attempts_select_admin on public.notification_attempts;
 create policy notification_attempts_select_admin on public.notification_attempts for select to authenticated
   using (public.current_user_is_admin());
+drop policy if exists delivery_codes_select_admin on public.delivery_codes;
 create policy delivery_codes_select_admin on public.delivery_codes for select to authenticated
   using (public.current_user_is_admin());
+drop policy if exists incident_notes_select_participant_admin on public.incident_notes;
 create policy incident_notes_select_participant_admin on public.incident_notes for select to authenticated
   using (
     public.current_user_is_admin()
@@ -501,6 +517,7 @@ create policy incident_notes_select_participant_admin on public.incident_notes f
       where i.id = incident_id and (b.sender_id = auth.uid() or b.gp_id = auth.uid())
     ))
   );
+drop policy if exists incident_evidence_select_participant_admin on public.incident_evidence;
 create policy incident_evidence_select_participant_admin on public.incident_evidence for select to authenticated
   using (
     public.current_user_is_admin()
@@ -510,11 +527,16 @@ create policy incident_evidence_select_participant_admin on public.incident_evid
       where i.id = incident_id and (b.sender_id = auth.uid() or b.gp_id = auth.uid())
     )
   );
+drop policy if exists prohibited_categories_select_all on public.prohibited_categories;
 create policy prohibited_categories_select_all on public.prohibited_categories for select to anon, authenticated using (true);
-create policy platform_config_select_all on public.platform_config for select to anon, authenticated using (true);
+drop policy if exists platform_config_select_all on public.platform_config;
+-- Aucune lecture directe de platform_config : états publics via get_my_state/admin_overview.
+drop policy if exists legal_validations_select_admin on public.legal_validations;
 create policy legal_validations_select_admin on public.legal_validations for select to authenticated
   using (public.current_user_is_admin());
+drop policy if exists booking_event_rules_select_all on public.booking_event_rules;
 create policy booking_event_rules_select_all on public.booking_event_rules for select to authenticated using (true);
+drop policy if exists audit_logs_select_admin on public.audit_logs;
 create policy audit_logs_select_admin on public.audit_logs for select to authenticated
   using (public.current_user_is_admin());
 

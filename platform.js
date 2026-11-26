@@ -37,7 +37,12 @@
     ready_for_pickup: "Colis disponible pour remise", handover_reported: "Remise préparée"
   };
 
+  const MIGRATION_MESSAGE = "Les migrations JotColis ne sont pas appliquées ou ne sont pas exposées sur ce projet Supabase. Aucune donnée métier n’est simulée. Appliquez les migrations autorisées, puis rechargez.";
+  const MIGRATION_ERROR_PATTERN = /MIGRATIONS_MISSING|PGRST20[1-9]|PGRST116|42P01|42883|42P13|schema cache|Could not find the function|Could not find the table|relation .* does not exist|function .* does not exist|migrations non appliquées/i;
+
   const ERROR_MESSAGES = [
+    [/MIGRATIONS_MISSING/, MIGRATION_MESSAGE],
+    [/PGRST20[1-9]|PGRST116|42P01|42883|42P13|schema cache|Could not find the function|Could not find the table|relation .* does not exist|function .* does not exist/i, MIGRATION_MESSAGE],
     [/COMMERCIAL_OPERATIONS_DISABLED/, "Les transports réels sont bloqués : les validations juridiques et l’ouverture commerciale ne sont pas enregistrées."],
     [/LEGAL_VALIDATIONS_INCOMPLETE/, "Validations juridiques France et Sénégal incomplètes."],
     [/LEGAL_VALIDATION_REQUIRED|LEGAL_REFERENCE_REQUIRED/, "Une référence de validation juridique documentée est requise."],
@@ -96,7 +101,8 @@
     dashboardFeedback: null,
     selectedTrip: null,
     requestIdempotencyKey: null,
-    environment: "production"
+    environment: "Prévisualisation (détection en cours)",
+    environmentMode: "preview"
   };
 
   function statusLabel(value) { return STATUS_LABELS[value] || String(value ?? "—"); }
@@ -130,10 +136,50 @@
     state.dashboardFeedback = { message: String(message), kind: kind || "info" };
     applyDashboardFeedback();
   }
+  function errorText(error) {
+    if (error == null) return "";
+    if (typeof error === "string") return error;
+    return [error.message, error.code, error.details, error.hint, error.error_description, error.status]
+      .filter(function (part) { return part != null && part !== ""; })
+      .map(String).join(" ");
+  }
+  function isMigrationMissing(error) {
+    return MIGRATION_ERROR_PATTERN.test(errorText(error));
+  }
   function friendlyError(error) {
-    const raw = String(error && (error.message || error) || "Erreur inconnue");
+    const raw = errorText(error) || "Erreur inconnue";
     for (const [pattern, message] of ERROR_MESSAGES) if (pattern.test(raw)) return message;
     return "Opération impossible : " + raw.replace(/[<>]/g, "").slice(0, 220);
+  }
+  function resolveEnvironment(config) {
+    const detector = window.JotColisEnvironment && window.JotColisEnvironment.detectEnvironment;
+    const detected = typeof detector === "function" ? detector({ window: window }) : null;
+    const candidate = config && config.environment;
+    if (candidate && typeof candidate === "object" &&
+        ["development", "preview", "production"].includes(candidate.mode) &&
+        typeof candidate.label === "string") {
+      return candidate;
+    }
+    // Une configuration historique sous forme de chaîne n'est jamais une preuve
+    // de production : on reste sur la détection sûre, par défaut « preview ».
+    return detected || Object.freeze({
+      mode: "preview",
+      label: "Prévisualisation / environnement à qualifier",
+      hostname: String(window.location && window.location.hostname || ""),
+      reason: "configuration_absente_ou_heritee",
+    });
+  }
+  function isValidPublicConfig(config) {
+    if (!config || typeof config !== "object") return false;
+    try {
+      const url = new URL(String(config.url || ""));
+      if (url.protocol !== "https:" || !/\.supabase\.co$/i.test(url.hostname)) return false;
+      if (url.pathname !== "/" && url.pathname !== "") return false;
+    } catch (_) { return false; }
+    if (!/^sb_publishable_[A-Za-z0-9_-]+$/.test(String(config.publishableKey || ""))) return false;
+    const serialised = JSON.stringify(config);
+    if (/service_role|SUPABASE_SERVICE_ROLE_KEY|sb_secret_[A-Za-z0-9]{4,}|sk_live_[A-Za-z0-9]{4,}/i.test(serialised)) return false;
+    return true;
   }
   function disableWhenBackendMissing(message) {
     $$("form[data-form] button[type=submit], #signup-form button, #signin-form button").forEach(function (button) {
@@ -147,7 +193,10 @@
   async function rpc(name, args) {
     if (!state.client) throw new Error("BACKEND_UNAVAILABLE");
     const result = await state.client.rpc(name, args || {});
-    if (result.error) throw result.error;
+    if (result.error) {
+      if (isMigrationMissing(result.error)) throw new Error("MIGRATIONS_MISSING");
+      throw result.error;
+    }
     return result.data;
   }
   async function select(tableName, builder) {
@@ -155,7 +204,10 @@
     let query = state.client.from(tableName).select("*");
     if (builder) query = builder(query);
     const result = await query;
-    if (result.error) throw result.error;
+    if (result.error) {
+      if (isMigrationMissing(result.error)) throw new Error("MIGRATIONS_MISSING");
+      throw result.error;
+    }
     return Array.isArray(result.data) ? result.data : [];
   }
   async function waitForSupabase() {
@@ -247,7 +299,9 @@
         select.appendChild(option);
       });
     } catch (error) {
-      placeholder.textContent = "Liaisons indisponibles : backend non à jour";
+      placeholder.textContent = isMigrationMissing(error)
+        ? "Migrations non appliquées : liaisons indisponibles"
+        : "Liaisons indisponibles : backend non à jour";
       state.backendError = friendlyError(error);
     }
   }
@@ -299,6 +353,12 @@
         ? "Vous êtes connecté à votre espace JotColis."
         : "Connecté, mais votre adresse e-mail n’est pas confirmée.", state.me.email_verified ? "info" : "warning");
     } catch (error) {
+      if (isMigrationMissing(error)) {
+        state.backendError = MIGRATION_MESSAGE;
+        disableWhenBackendMissing(MIGRATION_MESSAGE);
+        renderComplianceBanner();
+        return;
+      }
       state.backendError = friendlyError(error);
       $("#dashboard-root").innerHTML =
         '<div class="platform-alert platform-alert-error">' +
@@ -1211,11 +1271,13 @@
     homeProfileButtonRef = $("#home-profile-button");
     const ready = await waitForSupabase();
     const config = window.JOTCOLIS_CONFIG;
-    if (!ready || !config || !config.url || !config.publishableKey) {
-      disableWhenBackendMissing("Le client Supabase ou la configuration publique est indisponible. Aucun parcours métier n’est simulé.");
+    if (!ready || !isValidPublicConfig(config)) {
+      disableWhenBackendMissing("Le client Supabase ou la configuration publique est indisponible ou invalide. Aucun environnement de production n’est supposé et aucun parcours métier n’est simulé.");
       return;
     }
-    state.environment = config.environment || "production";
+    const environment = resolveEnvironment(config);
+    state.environment = environment.label + " (" + environment.mode + ")";
+    state.environmentMode = environment.mode;
     state.client = window.supabase.createClient(config.url, config.publishableKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });

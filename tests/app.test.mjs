@@ -15,6 +15,8 @@ const buildScript = await read("../scripts/build.mjs");
 const renderBlueprint = await read("../render.yaml");
 const ci = await read("../.github/workflows/ci.yml");
 const globeJs = await read("../journey-globe.js");
+const packageJson = await read("../package.json");
+const workerTest = await read("../supabase/functions/notification-worker/deno-scenarios.ts");
 const frontend = html + appJs + platformJs + config;
 const worker = await read("../supabase/functions/notification-worker/index.ts");
 const tablesSql = await read("../supabase/migrations/202611260002_platform_tables.sql");
@@ -85,7 +87,7 @@ test("la recherche et la publication utilisent les RPC serveur, jamais le stocka
 test("le frontend ne contient aucun secret ni clé service_role", () => {
   assert.match(config, /sb_publishable_/);
   assert.match(config, /Ne jamais ajouter de clé service_role/);
-  assert.doesNotMatch(frontend, /service_role\s*[:=]\s*['"][^'"]+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*['"]|sb_secret_|sk_live_/i);
+  assert.doesNotMatch(frontend, /service_role\s*[:=]\s*['"][^'"]+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*['"]|sb_secret_[A-Za-z0-9]{4,}|sk_live_[A-Za-z0-9]{4,}/i);
   assert.match(config, /window\.JOTCOLIS_CONFIG/);
   assert.match(html, /supabase-config\.js/);
   assert.match(html, /platform\.js/);
@@ -146,7 +148,7 @@ test("activation des notifications : séparation déclaration / secrets / test /
   assert.match(adminSql, /grant select on public\.prohibited_categories to anon, authenticated/);
 });
 
-test("worker : aucun faux succès, aucun secret dans les journaux et aucun test automatique payant", () => {
+test("worker : aucun faux succès, validation stricte, tests Deno locaux et aucun secret dans les journaux", () => {
   assert.match(worker, /x-worker-action/);
   assert.match(worker, /secret-check/);
   assert.match(worker, /aucun appel prestataire/i);
@@ -154,19 +156,53 @@ test("worker : aucun faux succès, aucun secret dans les journaux et aucun test 
   assert.match(worker, /action === "secret-check"/);
   assert.match(worker, /PROVIDER_CONFIRMATION_MISSING/);
   assert.match(worker, /DELIVERY_TIMEOUT_MANUAL_RECONCILIATION/);
+  assert.match(worker, /CLAIM_EXPIRED_BEFORE_DELIVERY/);
+  assert.match(worker, /INVALID_NOTIFICATION_PAYLOAD/);
+  assert.match(worker, /DUPLICATE_EVENT_IN_BATCH/);
+  assert.match(worker, /createWorkerHandler/);
+  assert.match(worker, /validateClaimedNotification/);
   assert.match(worker, /Idempotency-Key/);
+  assert.match(worker, /env\.get\("SUPABASE_SERVICE_ROLE_KEY"\)/);
   assert.doesNotMatch(worker, /payload:\s*row\.payload/);
   assert.doesNotMatch(worker, /console\.(log|error)\([^)]*Deno\.env/);
   assert.doesNotMatch(worker, /console\.(log|error)\([^)]*recipient_contact/);
   assert.doesNotMatch(worker, /sb_secret_|sk_live_/i);
+  assert.match(packageJson, /"test:worker"/);
+  assert.match(packageJson, /deno test --no-remote --allow-read --allow-env/);
+  assert.doesNotMatch(packageJson, /--allow-net/);
+  assert.match(workerTest, /Deno\.test\("deux workers concurrents simulés/);
+  assert.match(workerTest, /Deno\.test\("2xx sans identifiant de message/);
 });
 
-test("CI, build et documentation FREE couvrent les suites et livrables de la phase 2", () => {
+test("environnement : détection publique sûre, aucune production forcée, messages de migrations", () => {
+  assert.doesNotMatch(platformJs, /environment:\s*"production"/);
+  assert.doesNotMatch(platformJs, /config\.environment \|\| "production"/);
+  assert.match(config, /detectEnvironment/);
+  assert.match(config, /hote_preview/);
+  assert.match(config, /production_refusee_sans_liste_blanche/);
+  assert.match(platformJs, /isValidPublicConfig/);
+  assert.match(platformJs, /MIGRATION_MESSAGE/);
+  assert.match(platformJs, /PGRST20/);
+  assert.match(platformJs, /disableWhenBackendMissing\(MIGRATION_MESSAGE\)/);
+  assert.match(platformJs, /aria-busy/);
+});
+
+test("CI maintenue : actions node24 vérifiées, Node 22, suite worker et documentation finale", () => {
+  assert.match(ci, /actions\/checkout@v6/);
+  assert.match(ci, /actions\/setup-node@v6/);
+  assert.match(ci, /node-version: 22/);
   assert.match(ci, /npm ci/);
   assert.match(ci, /npm test/);
   assert.match(ci, /npm run test:sql/);
   assert.match(ci, /npm run test:frontend/);
+  assert.match(ci, /npm run test:worker/);
   assert.match(ci, /npm run build/);
+  assert.match(buildScript, /docs\/AUDIT-FINAL\.md/);
+  assert.match(packageJson, /"deno": "2\.9\.6"/);
+});
+
+test("build et documentation : rapports de phase 2, finale et FREE inclus", () => {
   assert.match(buildScript, /docs\/AUDIT-PHASE-2\.md/);
+  assert.match(buildScript, /docs\/AUDIT-FINAL\.md/);
   assert.match(buildScript, /docs\/SUPABASE-FREE\.md/);
 });

@@ -37,6 +37,10 @@ test("le schéma final active RLS et révoque les privilèges PUBLIC implicites"
   assert.match(allSql, /alter table public\.delivery_codes enable row level security/);
   assert.match(allSql, /alter table public\.notification_outbox enable row level security/);
   assert.match(allSql, /alter default privileges for role postgres in schema public\s+revoke all on functions from public, anon, authenticated/);
+  assert.match(allSql, /alter default privileges in schema public\s+revoke all on tables from public, anon, authenticated/);
+  assert.match(allSql, /alter default privileges in schema public\s+revoke all on functions from public, anon, authenticated/);
+  assert.match(migrations.get("202611260002_platform_tables.sql"), /drop policy if exists user_roles_select_own_admin on public\.user_roles/);
+  assert.doesNotMatch(migrations.get("202611260002_platform_tables.sql"), /create policy platform_config_select_all/);
 });
 
 test("les colonnes sensibles des corridors ne sont pas accordées au public", () => {

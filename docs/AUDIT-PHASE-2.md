@@ -6,6 +6,8 @@ Périmètre : audit et fiabilisation du chantier existant, sans nouvelle fonctio
 
 > Conclusion finale : **`NON PRÊT`**. Les corrections ci-dessous rendent le code techniquement prêt pour une session de validation contrôlée sur Supabase FREE, mais pas pour une préproduction déclarée fonctionnelle : l'intégration distante, les migrations réelles, les données, les providers, la concurrence réseau et les validations juridiques ne sont pas vérifiées.
 
+> **Addendum de clôture du 26 novembre 2026** : une phase finale a ensuite corrigé la détection d'environnement (`development` / `preview` / `production`), rendu les quatre migrations réexécutables, ajouté des tests Deno locaux du worker sans réseau, migré les actions GitHub vers `v6`/`node24` et enrichi la documentation Supabase Free (sauvegardes, restauration, connexions et consommation). Le rapport de clôture fait foi : [AUDIT-FINAL.md](AUDIT-FINAL.md). Les chiffres de tests ci-dessous décrivent l'état de la phase 2 avant cette dernière passe.
+
 ---
 
 ## 1. Problèmes constatés
@@ -164,3 +166,16 @@ Le présent rapport est ensuite mis à jour par un commit de documentation disti
 9. Ne pas fusionner `main`, ne pas déployer Render/Supabase Production et ne pas activer de transports commerciaux sans validation explicite du propriétaire.
 
 **Choix final unique : `NON PRÊT`.** Un blocage critique subsiste : l'absence de vérification sur le projet Supabase FREE réel. Le code local est durci et testé, mais l'intégration réelle, les données et la disponibilité ne sont pas prouvées. `PRÊT POUR PRÉPRODUCTION` et `PRÊT POUR LANCEMENT` sont donc exclus.
+
+
+---
+
+## 11. Addendum — clôture technique
+
+`[CORRIGÉ]` La phase finale a ajouté : détection d'environnement sûre sans `production` forcé, validation de la configuration publique, messages explicites d'absence de migrations, `DROP POLICY IF EXISTS` sur toutes les policies finales, suppression de `platform_config_select_all`, tests de réexécution/compatibilité historique, tests d'isolement multi-utilisateurs et de claims disjoints, refactor Deno testable du worker, 15 scénarios Deno locaux sans `--allow-net`, `actions/checkout@v6`, `actions/setup-node@v6`, Node.js 22 et `npm run test:worker`.
+
+`[TESTÉ LOCAL]` Les cinq commandes obligatoires et `npm run test:worker` ont été réexécutées après ces corrections ; les résultats détaillés sont dans [AUDIT-FINAL.md](AUDIT-FINAL.md). PGlite reste une preuve locale à connexion unique ; Deno local reste une preuve de compilation/lint/logique simulée, pas du runtime Edge déployé.
+
+`[VÉRIFIÉ GITHUB]` Les runs de la branche sont consultables via `https://github.com/aydiarra-star/Jotcolis/actions?query=branch%3Aarena%2Fb65591cf-jotcolis`. Le détail des runs de clôture est consigné dans le rapport final et dans la livraison finale.
+
+`[ACCÈS SUPABASE REQUIS]` / `[AUTORISATION PROPRIÉTAIRE]` Aucune vérification distante, migration Supabase, déploiement Render/Edge, envoi externe, donnée réelle ou modification de facturation n'a été ajoutée. Le statut de clôture est `C — CODE FINALISÉ MAIS VALIDATION BLOQUÉE PAR DES ACCÈS OU AUTORISATIONS MANQUANTS`.

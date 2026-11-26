@@ -27,6 +27,19 @@ Deux actions sont possibles, toujours protégées par l'en-tête `x-worker-secre
 
 Aucun mode automatique de test d'envoi n'est exposé : un test réel doit être explicitement autorisé par le propriétaire, effectué avec un compte de préproduction, puis enregistré côté serveur avec l'identifiant de message du prestataire. Aucun prestataire payant n'est requis pour les parcours internes.
 
+Le module exporte `createWorkerHandler(env, fetchImpl, logger)` et n'appelle `Deno.serve` que lorsqu'il est exécuté comme module principal (`import.meta.main`). Cela permet des tests Deno locaux sans déployer la fonction, sans secret réel et sans autorisation réseau.
+
+## Tests locaux Deno
+
+```bash
+npm ci
+npm run test:worker
+```
+
+Cette commande exécute `deno check --no-remote`, `deno lint` et `deno test --no-remote --allow-read --allow-env` sur `deno-scenarios.ts`. **Aucune autorisation `--allow-net` n'est accordée** : `fetch`, `Deno.env` et les journaux sont simulés. Quinze scénarios couvrent : secret absent/invalide, absence de secrets serveur, secrets invalides, prestataire indisponible, non-2xx, timeout, absence d'identifiant de message, confirmation 2xx, claim expiré, payload invalide, message déjà traité, double envoi dans un lot, deux workers concurrents simulés, déduplication par `event_key` et absence de données sensibles dans les journaux.
+
+Ces tests prouvent la logique locale Deno/TypeScript, pas le runtime Supabase Edge déployé, ni un prestataire réel, ni une concurrence réseau multi-clients.
+
 ## Règles d'envoi
 
 1. Les événements métier écrivent une ligne `notification_outbox` via `enqueue_notification`. `in_app` crée une notification interne disponible ; les canaux externes non opérationnels restent `blocked` avec un motif explicite.
@@ -34,8 +47,11 @@ Aucun mode automatique de test d'envoi n'est exposé : un test réel doit être 
 3. E-mail : endpoint HTTPS générique + jeton serveur + en-tête `Idempotency-Key`. WhatsApp : **WhatsApp Cloud API officielle Meta** avec template approuvé. Aucune API non officielle.
 4. `sent` exige **à la fois** HTTP 2xx, un identifiant de message fourni par le prestataire, un claim valide et un état de canal `operationnel`. Un 2xx sans identifiant reste bloqué pour réconciliation : aucun faux succès.
 5. Un non-2xx explicite est `failed` avec retry borné. Un timeout ou une exception réseau est `blocked` pour réconciliation manuelle, car le prestataire a pu accepter le message : cela évite un double envoi automatique.
-6. Le corps e-mail/WhatsApp ne contient que des champs whitelistés (`label`, `instruction`, `parcel_code`) et aucun `payload` brut. Le code de remise n'est jamais dans `notification_outbox.payload`. Les journaux contiennent seulement des compteurs et des codes d'erreur, jamais de contact, secret, code ou réponse prestataire.
-7. `record_notification_result` revérifie indépendamment le claim, le bail, le 2xx, l'identifiant prestataire et l'état opérationnel.
+6. Le worker valide chaque ligne avant tout appel : UUID, `event_key`, type d'événement, canal, statut `claimed`, `claim_token`, numéro de tentative, destinataire, payload whitelisté et bail non expiré. Un payload avec clé inconnue, objet imbriqué ou caractère de contrôle est bloqué ; aucun `payload` brut n'est transmis.
+7. Les secrets sont validés côté serveur : endpoint e-mail HTTPS, jeton sans espace, version Graph API `vX.Y`, identifiant téléphone numérique, template et langue conformes. Une configuration invalide est bloquée avant tout appel prestataire.
+8. Un `event_key` répété dans un même lot est dédupliqué localement (`DUPLICATE_EVENT_IN_BATCH`) ; deux workers ne peuvent traiter la même ligne qu'une fois grâce au claim serveur `FOR UPDATE SKIP LOCKED` et au jeton.
+9. Le corps e-mail/WhatsApp ne contient que des champs whitelistés (`label`, `instruction`, `parcel_code`) et aucun `payload` brut. Le code de remise n'est jamais dans `notification_outbox.payload`. Les journaux contiennent seulement des compteurs et des codes d'erreur, jamais de contact, secret, code ou réponse prestataire.
+10. `record_notification_result` revérifie indépendamment le claim, le bail, le 2xx, l'identifiant prestataire et l'état opérationnel.
 
 L'idempotence par `event_key` et `claim_token` empêche le double marquage en base. L'en-tête `Idempotency-Key` est envoyé au prestataire e-mail. WhatsApp Cloud API n'offre pas ici de garantie d'idempotence equivalente : les timeouts restent donc bloqués jusqu'à vérification humaine dans les journaux du prestataire.
 

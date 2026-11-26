@@ -572,9 +572,141 @@ describe("Audit Phase 2 — scénarios PostgreSQL locaux isolés", serial, () =>
     assert.match(source, /PROVIDER_CONFIRMATION_MISSING/);
     assert.match(source, /DELIVERY_TIMEOUT_MANUAL_RECONCILIATION/);
     assert.match(source, /notification_channel_is_operational/);
+    assert.match(source, /createWorkerHandler/);
+    assert.match(source, /CLAIM_EXPIRED_BEFORE_DELIVERY/);
+    assert.match(source, /INVALID_NOTIFICATION_PAYLOAD/);
     assert.doesNotMatch(source, /payload:\s*row\.payload/);
     assert.doesNotMatch(source, /console\.(log|error)\([^)]*Deno\.env/);
     assert.doesNotMatch(source, /console\.(log|error)\([^)]*recipient_contact/);
     assert.doesNotMatch(source, /sb_secret_|sk_live_/i);
   });
+
+  test("isolation multi-utilisateurs : profils, demandes, réservations, passeport, notifications, codes, incidents, documents et audit", serial, async () => {
+    const { db, ids, tripId, booking1 } = fixture;
+    const sender2Code = await asUser(db, ids.sender2, () => callRpcNamed(db, "submit_parcel_request",
+      requestArgs(tripId, 2, "phase-final-isolation-request-000001", "Livres pour test isolement")));
+    const sender2Request = (await asService(db, () => db.query(
+      "select id from public.parcel_requests where parcel_code = $1", [sender2Code],
+    ))).rows[0];
+    const booking2 = await asUser(db, ids.gp, () => callRpcNamed(db, "respond_to_request", {
+      p_request_id: sender2Request.id, p_accept: true, p_note: null,
+    }));
+
+    await asService(db, () => db.query(`
+      insert into public.gp_verifications (user_id) values ($1) on conflict do nothing
+    `, [ids.sender2]));
+    await asService(db, () => db.query(`
+      insert into public.verification_documents (user_id, kind, storage_path)
+      values ($1, 'identity', 'phase-final/sender1-identity.pdf'),
+             ($2, 'identity', 'phase-final/sender2-identity.pdf')
+      on conflict do nothing
+    `, [ids.sender1, ids.sender2]));
+    await asService(db, () => db.query(`
+      insert into public.trip_alerts (user_id, origin_city, destination_city, contact)
+      values ($1, 'Paris', 'Dakar', 'alerte-sender1@example.test'),
+             ($2, 'Lyon', 'Dakar', 'alerte-sender2@example.test')
+    `, [ids.sender1, ids.sender2]));
+    await asService(db, () => db.query(`
+      insert into public.notification_outbox
+        (event_key, event_type, recipient_user_id, channel, payload, status)
+      values
+        ('phase-final-isolation-notification-sender1', 'test_isolation', $1, 'in_app', '{}'::jsonb, 'sent'),
+        ('phase-final-isolation-notification-sender2', 'test_isolation', $2, 'in_app', '{}'::jsonb, 'sent')
+      on conflict (event_key) do nothing
+    `, [ids.sender1, ids.sender2]));
+    await asService(db, () => db.query(`
+      insert into public.delivery_codes
+        (booking_id, parcel_code, code_salt, code_hash, expires_at)
+      values
+        ($1, 'JC-PHASE-FINALE-CODE-1', 'local-salt-1', 'local-hash-1', now() + interval '1 day'),
+        ($2, 'JC-PHASE-FINALE-CODE-2', 'local-salt-2', 'local-hash-2', now() + interval '1 day')
+      on conflict do nothing
+    `, [booking1, booking2]));
+    await asService(db, () => db.query(`
+      insert into public.passport_events
+        (booking_id, event_type, visible_to_sender, visible_to_gp, visible_to_public, parcel_code, payload)
+      values ($1, 'booking_created', true, false, false, 'JC-PHASE-FINALE-PASSPORT-2', '{}'::jsonb)
+    `, [booking2]));
+    const incidentIds = (await asService(db, () => db.query(`
+      insert into public.incidents (booking_id, opened_by, category, description, internal_reference)
+      values
+        ($1, $2, 'delay', 'Incident local isolement 1', 'INC-PHASE-FINALE-1'),
+        ($3, $4, 'delay', 'Incident local isolement 2', 'INC-PHASE-FINALE-2')
+      returning id, internal_reference
+    `, [booking1, ids.sender1, booking2, ids.sender2]))).rows;
+    const incident1 = incidentIds.find((row) => row.internal_reference === "INC-PHASE-FINALE-1").id;
+    const incident2 = incidentIds.find((row) => row.internal_reference === "INC-PHASE-FINALE-2").id;
+    await asService(db, () => db.query(`
+      insert into public.incident_notes (incident_id, author_id, note, is_internal)
+      values ($1, $2, 'Note visible isolement 1', false), ($3, $4, 'Note visible isolement 2', false)
+    `, [incident1, ids.sender1, incident2, ids.sender2]));
+    await asService(db, () => db.query(`
+      insert into public.incident_evidence (incident_id, storage_path, uploaded_by)
+      values ($1, 'phase-final/incident-sender1.pdf', $2), ($3, 'phase-final/incident-sender2.pdf', $4)
+    `, [incident1, ids.sender1, incident2, ids.sender2]));
+
+    const asSender1 = (sql, params = []) => asUser(db, ids.sender1, () => db.query(sql, params));
+    assert.deepEqual((await asSender1("select id from public.profiles")).rows.map((r) => r.id), [ids.sender1]);
+    assert.equal((await asSender1("select count(*)::int n from public.parcel_requests where sender_id = $1", [ids.sender2])).rows[0].n, 0);
+    assert.equal((await asSender1("select count(*)::int n from public.bookings where id = $1", [booking2])).rows[0].n, 0);
+    assert.equal((await asSender1("select count(*)::int n from public.passport_events where parcel_code = $1", ["JC-PHASE-FINALE-PASSPORT-2"])).rows[0].n, 0);
+    const sender2Notification = (await asService(db, () => db.query(
+      "select id from public.notification_outbox where event_key = $1",
+      ["phase-final-isolation-notification-sender2"],
+    ))).rows[0];
+    const visibleNotifications = (await asSender1(
+      "select id from public.my_notifications where event_type = $1", ["test_isolation"],
+    )).rows;
+    assert.equal(visibleNotifications.length, 1);
+    assert.ok(!visibleNotifications.some((row) => row.id === sender2Notification.id));
+    assert.equal((await asSender1("select count(*)::int n from public.delivery_code_status where booking_id = $1", [booking2])).rows[0].n, 0);
+    assert.equal((await asSender1("select count(*)::int n from public.verification_documents where user_id = $1", [ids.sender2])).rows[0].n, 0);
+    assert.equal((await asSender1("select count(*)::int n from public.trip_alerts where user_id = $1", [ids.sender2])).rows[0].n, 0);
+    assert.equal((await asSender1("select count(*)::int n from public.gp_verifications where user_id = $1", [ids.sender2])).rows[0].n, 0);
+    assert.equal((await asSender1("select count(*)::int n from public.incidents where id = $1", [incident2])).rows[0].n, 0);
+    assert.equal((await asSender1("select count(*)::int n from public.incident_notes where note = $1", ["Note visible isolement 2"])).rows[0].n, 0);
+    assert.equal((await asSender1("select count(*)::int n from public.incident_evidence where storage_path = $1", ["phase-final/incident-sender2.pdf"])).rows[0].n, 0);
+    for (const table of ["audit_logs", "legal_validations"]) {
+      assert.equal((await asSender1(`select count(*)::int n from public.${table}`)).rows[0].n, 0, `Fuite RLS admin sur ${table}`);
+    }
+    for (const table of ["notification_outbox", "notification_attempts", "delivery_codes", "notification_provider_states", "platform_config"]) {
+      await expectError(asSender1(`select * from public.${table}`), "permission denied");
+    }
+  });
+
+  test("double claim : deux appels successifs ne revendiquent jamais la même ligne (PGlite, sans concurrence réseau)", serial, async () => {
+    const { db, ids } = fixture;
+    await serviceCall(db, "report_provider_secret_check", {
+      p_channel: "email", p_secrets_present: true, p_error_code: null,
+    });
+    await serviceCall(db, "record_provider_test_result", {
+      p_channel: "email", p_provider_message_id: "phase-final-provider-msg-0001",
+      p_http_status: 200, p_error_code: null,
+    });
+    await serviceCall(db, "mark_provider_operational", {
+      p_channel: "email", p_reason: "Activation locale pour test de claim disjoint",
+    });
+    for (let index = 0; index < 3; index += 1) {
+      await asService(db, () => callRpcNamed(db, "enqueue_notification", {
+        p_event_key: `phase-final-claim-${index}`,
+        p_event_type: "test_claim",
+        p_recipient_user_id: ids.sender1,
+        p_channel: "email",
+        p_payload: { label: "Test local de claim", instruction: "Aucun envoi réel" },
+        p_recipient_contact: "expediteur1@example.test",
+      }));
+    }
+    const first = await asService(db, () => callSetRpcNamed(db, "claim_notifications", {
+      p_limit: 100, p_worker_id: "phase-final-worker-a",
+    }));
+    const second = await asService(db, () => callSetRpcNamed(db, "claim_notifications", {
+      p_limit: 100, p_worker_id: "phase-final-worker-b",
+    }));
+    assert.ok(first.length >= 3);
+    assert.equal(second.length, 0, "Le second worker ne doit revendiquer aucune ligne déjà claimed");
+    const firstIds = new Set(first.map((row) => row.id));
+    assert.equal(firstIds.size, first.length);
+    assert.ok(first.every((row) => row.claim_token && row.claim_expires_at && row.status === "claimed"));
+  });
+
 });
