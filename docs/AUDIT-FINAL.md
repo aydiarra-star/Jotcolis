@@ -115,7 +115,9 @@ Ce rapport clôt la phase de fiabilisation technique. Il ne déclare pas JotColi
 
 `[VÉRIFIÉ GITHUB]` Vérification des actions maintenues avant modification du workflow : les tags `v6` de `actions/checkout` et `actions/setup-node` existent, et leurs `action.yml` déclarent `runs.using: node24`. Les entrées `ref`, `node-version` et `cache` utilisées par le workflow restent présentes. Le workflow a ensuite été migré de `v4`/Node 20 vers `v6`/Node 22.
 
-`[VÉRIFIÉ GITHUB]` Les exécutions réelles de la branche sont visibles ici : <https://github.com/aydiarra-star/Jotcolis/actions?query=branch%3Aarena%2Fb65591cf-jotcolis>. Le run du commit de corrections de clôture et le run du commit de consolidation de ce rapport sont ajoutés après leur push, puis interrogés via `gh run list`, `gh api .../check-runs` et `gh api .../actions/jobs/...`. Aucun succès n'est attribué à un SHA non interrogé.
+`[VÉRIFIÉ GITHUB]` Commit de corrections de clôture `40a2178465afa296843fcb929c43f923a83b9e32` : run push [45880393886](https://github.com/aydiarra-star/Jotcolis/actions/runs/45880393886) `success`, créé le 2026-11-26T19:00:57Z et terminé le 2026-11-26T19:01:39Z. Check-run/job `140117964589` (`test-and-build`) `success`, URL <https://github.com/aydiarra-star/Jotcolis/actions/runs/45880393886/job/140117964589>. Les 12 étapes observées sont toutes `success` : Set up job, Checkout, Set up Node.js, Install test dependencies, Tests complets, Tests SQL ciblés, Tests frontend ciblés, Tests worker Deno (sans réseau), Build static preview, Post Set up Node.js, Post Checkout, Complete job. `gh api .../check-runs/.../annotations` retourne **0 annotation** : l'avertissement Node.js 20 / actions v4 a disparu après le passage à `checkout@v6`, `setup-node@v6` et Node.js 22.
+
+`[VÉRIFIÉ GITHUB]` Les exécutions réelles de la branche sont visibles ici : <https://github.com/aydiarra-star/Jotcolis/actions?query=branch%3Aarena%2Fb65591cf-jotcolis>. Le commit de consolidation de ce rapport est poussé séparément ; son propre run est interrogé après push et fourni dans la livraison finale. Aucun succès n'est attribué à un SHA non interrogé.
 
 
 ## 8. Problèmes encore ouverts

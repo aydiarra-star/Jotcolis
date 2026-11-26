@@ -176,6 +176,6 @@ Le présent rapport est ensuite mis à jour par un commit de documentation disti
 
 `[TESTÉ LOCAL]` Les cinq commandes obligatoires et `npm run test:worker` ont été réexécutées après ces corrections ; les résultats détaillés sont dans [AUDIT-FINAL.md](AUDIT-FINAL.md). PGlite reste une preuve locale à connexion unique ; Deno local reste une preuve de compilation/lint/logique simulée, pas du runtime Edge déployé.
 
-`[VÉRIFIÉ GITHUB]` Les runs de la branche sont consultables via `https://github.com/aydiarra-star/Jotcolis/actions?query=branch%3Aarena%2Fb65591cf-jotcolis`. Le détail des runs de clôture est consigné dans le rapport final et dans la livraison finale.
+`[VÉRIFIÉ GITHUB]` Le commit de clôture `40a2178` a le run [45880393886](https://github.com/aydiarra-star/Jotcolis/actions/runs/45880393886) `success`, check-run/job `140117964589` `success`, 12 étapes réussies et 0 annotation. Les runs de la branche sont consultables via <https://github.com/aydiarra-star/Jotcolis/actions?query=branch%3Aarena%2Fb65591cf-jotcolis>. Le détail final est consigné dans [AUDIT-FINAL.md](AUDIT-FINAL.md) et dans la livraison finale.
 
 `[ACCÈS SUPABASE REQUIS]` / `[AUTORISATION PROPRIÉTAIRE]` Aucune vérification distante, migration Supabase, déploiement Render/Edge, envoi externe, donnée réelle ou modification de facturation n'a été ajoutée. Le statut de clôture est `C — CODE FINALISÉ MAIS VALIDATION BLOQUÉE PAR DES ACCÈS OU AUTORISATIONS MANQUANTS`.
