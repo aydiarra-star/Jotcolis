@@ -43,7 +43,19 @@ const me = {
     privacy_accepted_at: "2026-11-20T10:00:00.000Z",
   },
   gp_verification: null,
-  config: { commercial_open: false, legal_validation_complete: false, email_provider_configured: false },
+  config: {
+    commercial_open: false,
+    legal_validation_complete: false,
+    notifications_enabled: false,
+    email_provider_configured: false,
+    whatsapp_provider_configured: false,
+    email_provider_state: "non_configure",
+    whatsapp_provider_state: "non_configure",
+  },
+  notification_provider_states: {
+    email: { server_state: "non_configure", declared_active: false, secrets_present: false },
+    whatsapp: { server_state: "non_configure", declared_active: false, secrets_present: false },
+  },
   prohibited_categories_legally_validated: false,
 };
 
@@ -61,7 +73,7 @@ function makeSession(overrides = {}) {
 
 function createMockClient({ session = null, rpcHandlers = {}, tables = {}, errors = {} } = {}) {
   let currentSession = session;
-  const calls = { rpc: [], auth: [], storage: [] };
+  const calls = { rpc: [], auth: [], storage: [], tables: [] };
 
   const makeBuilder = (tableName) => {
     const builder = {};
@@ -78,7 +90,10 @@ function createMockClient({ session = null, rpcHandlers = {}, tables = {}, error
   };
 
   const client = {
-    from: (tableName) => makeBuilder(tableName),
+    from: (tableName) => {
+      calls.tables.push(tableName);
+      return makeBuilder(tableName);
+    },
     rpc: async (name, args) => {
       calls.rpc.push({ name, args });
       if (errors[name]) return { data: null, error: errors[name] };
@@ -328,4 +343,83 @@ test("compte non confirmé : l'interface indique le blocage et refuse d'ouvrir u
   assert.match(document.querySelector("#auth-status").textContent, /Confirmez votre adresse e-mail/);
   assert.equal(env.calls.rpc.some((item) => item.name === "submit_parcel_request"), false);
   env.dom.window.close();
+});
+
+
+test("utilisateur non connecté : aucun état privé, aucune lecture directe de platform_config", async () => {
+  const env = await createEnvironment();
+  const { document, calls } = env;
+  assert.equal(document.querySelector("#dashboard-shell").hidden, true);
+  assert.match(document.querySelector("#dashboard-root").textContent, /Connectez-vous/);
+  assert.ok(!calls.rpc.some((call) => call.name === "get_my_state"));
+  assert.ok(!calls.tables.includes("platform_config"));
+  assert.ok(!document.querySelector('[data-tab="admin"]'));
+});
+
+test("utilisateur connecté sans rôle admin : aucun onglet administration ni RPC admin", async () => {
+  const env = await createEnvironment({
+    session: makeSession(),
+    rpcHandlers: { get_my_state: () => me },
+  });
+  const { document, calls } = env;
+  await flush();
+  assert.ok(calls.rpc.some((call) => call.name === "get_my_state"));
+  assert.ok(!calls.rpc.some((call) => call.name === "admin_overview"));
+  assert.ok(!document.querySelector('[data-tab="admin"]'));
+  assert.ok(!calls.tables.includes("platform_config"));
+});
+
+test("administrateur : états serveur visibles, déclaration sans activation automatique", async () => {
+  const adminMe = {
+    ...me,
+    is_admin: true,
+    roles: ["sender", "admin"],
+  };
+  const adminOverview = {
+    counts: { profiles: 4, pending_gp: 0, trips: 1, requests: 1, bookings: 1, open_incidents: 0, blocked_notifications: 2 },
+    profiles: [], gp_verifications: [], corridors: [], trips: [], incidents: [], bookings: [],
+    categories: [], legal_validations: [], audit_logs: [], notifications: [],
+    notification_provider_states: [
+      { channel: "email", declared_provider_name: "Prestataire de test", declared_active: true, server_state: "non_configure", secrets_present: false, last_error: "SERVER_SECRETS_MISSING" },
+      { channel: "whatsapp", declared_provider_name: null, declared_active: false, server_state: "non_configure", secrets_present: false, last_error: "SERVER_SECRETS_MISSING" },
+    ],
+    platform_config: {
+      commercial_open: false, notifications_enabled: false,
+      email_provider_state: "non_configure", whatsapp_provider_state: "non_configure",
+    },
+    prohibited_categories: [],
+  };
+  const env = await createEnvironment({
+    session: makeSession(),
+    rpcHandlers: {
+      get_my_state: () => adminMe,
+      admin_overview: () => adminOverview,
+      admin_set_provider_config: () => null,
+    },
+  });
+  const { document, window, calls } = env;
+  await flush();
+  const adminTab = document.querySelector('[data-tab="admin"]');
+  assert.ok(adminTab);
+  adminTab.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  await flush();
+  assert.match(document.querySelector("#dashboard-root").textContent, /Non configuré/);
+  assert.match(document.querySelector("#dashboard-root").textContent, /Déclaration administrative/);
+  assert.doesNotMatch(document.querySelector("#dashboard-root").innerHTML, /<option value="notifications_enabled">/);
+  assert.ok(!calls.tables.includes("platform_config"));
+
+  const form = document.querySelector('form[data-form="admin-provider-config"]');
+  assert.ok(form);
+  setInput(document, "provider", "Prestataire déclaré de test", form);
+  setInput(document, "reason", "Déclaration locale sans secret ni activation", form);
+  const configured = setInput(document, "configured", true, form);
+  configured.checked = true;
+  submit(form, window);
+  await flush();
+  const providerCall = calls.rpc.find((call) => call.name === "admin_set_provider_config");
+  assert.ok(providerCall);
+  assert.equal(providerCall.args.p_channel, "email");
+  assert.equal(providerCall.args.p_configured, true);
+  assert.doesNotMatch(JSON.stringify(providerCall.args), /sb_secret|service_role|Bearer/i);
+  assert.match(document.querySelector("#dashboard-feedback").textContent, /Aucun canal n’a été activé/);
 });

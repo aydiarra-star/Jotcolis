@@ -4,7 +4,7 @@
 
 JotColis est une plateforme mobile-first de mise en relation entre expéditeurs, voyageurs transporteurs (GP), destinataires et administrateurs. Ce dépôt officiel contient le frontend statique, les migrations Supabase et la documentation du chantier.
 
-> **État réel : `NON PRÊT` pour un lancement commercial.** Le frontend ne contient plus de trajets, confirmations, codes ou suivis de démonstration. Les nouveaux parcours sont contrôlés par Supabase Auth, RLS et des fonctions PostgreSQL. Les migrations de ce dépôt ont été exécutées et testées dans un PostgreSQL local PGlite, mais **elles n'ont pas été appliquées à la base Supabase distante** : l'accès propriétaire et la vérification des services vivants manquent. Aucun paiement, transport réel, réservation commerciale, envoi e-mail ou message WhatsApp n'est activé. Le rapport détaillé est [docs/AUDIT-ET-CHANTIER.md](docs/AUDIT-ET-CHANTIER.md).
+> **État réel : `NON PRÊT` pour un lancement commercial.** Le frontend ne contient plus de trajets, confirmations, codes ou suivis de démonstration. Les nouveaux parcours sont contrôlés par Supabase Auth, RLS et des fonctions PostgreSQL. Les migrations de ce dépôt ont été exécutées et testées dans un PostgreSQL local PGlite, mais **elles n'ont pas été appliquées à la base Supabase distante** : l'accès propriétaire et la vérification des services vivants manquent. Aucun paiement, transport réel, réservation commerciale, envoi e-mail ou message WhatsApp n'est activé. Le rapport de la première phase est [docs/AUDIT-ET-CHANTIER.md](docs/AUDIT-ET-CHANTIER.md), le rapport de fiabilisation est [docs/AUDIT-PHASE-2.md](docs/AUDIT-PHASE-2.md), et les limites FREE sont dans [docs/SUPABASE-FREE.md](docs/SUPABASE-FREE.md).
 
 ## Ce qui est en place dans le code
 
@@ -15,7 +15,7 @@ JotColis est une plateforme mobile-first de mise en relation entre expéditeurs,
 - Demandes et réservations : déclaration du contenu, acceptation/refus, capacité atomique, idempotence et libération de capacité.
 - Passeport colis : référence générée serveur, événements chaînés et immuables, transitions déclarées, suivi public sans donnée personnelle.
 - Code de remise temporaire : génération imprévisible, hachage, expiration, tentatives, vérification serveur et procédure de secours administrateur auditée.
-- Notifications : table d'outbox, historique immuable, tentatives, statut bloqué explicite et worker Edge Function non déployé. Aucun envoi n'est prétendu réussi sans réponse d'un prestataire officiel.
+- Notifications : table d'outbox, historique immuable, tentatives, statut bloqué explicite et worker Edge Function non déployé. Déclaration administrative, secrets serveur, test prestataire confirmé et activation `service_role` sont strictement séparés ; aucun envoi n'est prétendu réussi sans réponse 2xx et identifiant du prestataire officiel.
 - Administration : utilisateurs, dossiers GP, corridors, trajets, réservations, incidents, validations juridiques, drapeaux d'exploitation et journal d'audit.
 - Blocage légal : validations documentées France/Sénégal, catégories de marchandises et corridors désactivés par défaut. Aucune conformité juridique réelle n'est inventée.
 
@@ -36,9 +36,11 @@ Prérequis : Node.js 20 ou supérieur.
 npm ci
 npm test
 npm run build
+npm run test:sql
+npm run test:frontend
 ```
 
-`npm test` exécute 39 tests : assertions statiques, 12 scénarios d'intégration SQL dans PGlite et 8 scénarios navigateur jsdom avec un client Supabase simulé. Aucun test ne touche la base ou les utilisateurs réels. `npm run build` génère `dist/` avec le frontend, les styles, le globe, la couche plateforme et le rapport d'audit. `dist/` et `node_modules/` sont ignorés par Git.
+`npm test` exécute **52 tests / 52 réussis** : 22 assertions statiques d'architecture, de migrations et de code métier, 19 scénarios d'intégration SQL PGlite (12 historiques + 7 scénarios de fiabilité Phase 2), et 11 parcours jsdom avec un client Supabase simulé. `npm run test:sql` exécute **19 tests / 19 réussis** ; `npm run test:frontend` exécute **22 tests / 22 réussis** (11 assertions statiques + 11 parcours jsdom). Aucun test ne touche la base ou les utilisateurs réels. Le workflow GitHub Actions exécute les cinq commandes après `npm ci`. `npm run build` génère `dist/` avec le frontend, les styles, le globe, la couche plateforme, le rapport d'audit initial, le rapport Phase 2 et la documentation FREE. `dist/` et `node_modules/` sont ignorés par Git.
 
 ## Configuration et secrets
 
@@ -46,7 +48,9 @@ npm run build
 
 ## Documentation
 
-- [Audit, chantier et état réel](docs/AUDIT-ET-CHANTIER.md) — document de référence.
+- [Audit, chantier et état réel — phase 1](docs/AUDIT-ET-CHANTIER.md) — document de référence.
+- [Audit, corrections et validation — phase 2](docs/AUDIT-PHASE-2.md) — rapport de fiabilisation.
+- [Contraintes Supabase FREE](docs/SUPABASE-FREE.md) — quotas, pause et limites de disponibilité.
 - [Prompt maître](docs/PROMPT-MAITRE.md), [cahier des charges](docs/CAHIER-DES-CHARGES.md), [architecture cible](docs/ARCHITECTURE.md), [plan backend et sécurité](docs/PLAN-BACKEND-MVP.md), [feuille de route](docs/ROADMAP.md), [parcours UX](docs/UX-PARCOURS.md), [identité visuelle](docs/IDENTITE-VISUELLE.md) — documents historiques de conception, à relire au regard de l'audit.
 - [Migrations SQL](supabase/migrations/) — six migrations historiques conservées, quatre migrations additives du chantier. À rapprocher de l'historique Supabase distant avant toute application.
 - [Prototype visuel historique](prototype/index.html).

@@ -29,6 +29,40 @@ begin
 end;
 $$;
 
+-- Les drapeaux publics ne sont jamais écrits par un administrateur : ils sont
+-- dérivés des états serveur. Aucun secret, identifiant de message ou contact
+-- n'est stocké dans platform_config.
+create or replace function public.sync_notification_provider_state()
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  v_active boolean;
+  v_email_ready boolean;
+  v_whatsapp_ready boolean;
+  v_email_state text;
+  v_whatsapp_state text;
+begin
+  select
+    coalesce(bool_or(server_state = 'operationnel' and declared_active and secrets_present), false),
+    coalesce(bool_or(channel = 'email' and server_state in ('configure', 'teste', 'operationnel') and declared_active and secrets_present), false),
+    coalesce(bool_or(channel = 'whatsapp' and server_state in ('configure', 'teste', 'operationnel') and declared_active and secrets_present), false)
+  into v_active, v_email_ready, v_whatsapp_ready
+  from public.notification_provider_states;
+
+  select server_state into v_email_state from public.notification_provider_states where channel = 'email';
+  select server_state into v_whatsapp_state from public.notification_provider_states where channel = 'whatsapp';
+
+  insert into public.platform_config (key, value, description, updated_by, updated_at) values
+    ('notifications_enabled', to_jsonb(v_active), 'Valeur DÉRIVÉE : au moins un canal serveur opérationnel confirmé.', null, now()),
+    ('email_provider_configured', to_jsonb(v_email_ready), 'Valeur DÉRIVÉE : secrets serveur détectés, jamais une déclaration admin.', null, now()),
+    ('whatsapp_provider_configured', to_jsonb(v_whatsapp_ready), 'Valeur DÉRIVÉE : secrets serveur détectés, jamais une déclaration admin.', null, now()),
+    ('email_provider_state', to_jsonb(coalesce(v_email_state, 'non_configure')), 'État serveur du canal e-mail.', null, now()),
+    ('whatsapp_provider_state', to_jsonb(coalesce(v_whatsapp_state, 'non_configure')), 'État serveur du canal WhatsApp.', null, now())
+  on conflict (key) do update
+    set value = excluded.value, description = excluded.description,
+        updated_by = null, updated_at = now();
+end;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- Worker de notifications : revendication et résultat, uniquement service_role.
 -- Aucun message n'est marqué « envoyé » sans réponse 2xx d'un prestataire réel.
@@ -47,12 +81,36 @@ returns table (
   payload jsonb,
   status text,
   claim_token uuid,
-  attempt_no integer
+  attempt_no integer,
+  claim_expires_at timestamptz
 )
 language plpgsql security definer set search_path = '' as $$
 declare
   v_limit integer := greatest(1, least(coalesce(p_limit, 20), 100));
 begin
+  -- Qualification explicite : les noms de colonnes de retour sont aussi des
+  -- variables PL/pgSQL et doivent rester non ambigus.
+  update public.notification_provider_states s
+  set server_state = 'en_erreur',
+      last_error = 'CLAIM_TIMEOUT_MANUAL_RECONCILIATION',
+      operational_at = null,
+      updated_at = now()
+  where s.channel in (
+    select distinct n.channel from public.notification_outbox n
+    where n.status = 'claimed' and n.claim_expires_at <= now()
+  ) and s.channel in ('email', 'whatsapp');
+
+  update public.notification_outbox n
+  set status = 'blocked',
+      last_error = 'CLAIM_TIMEOUT_MANUAL_RECONCILIATION',
+      claim_token = null,
+      claimed_at = null,
+      claim_expires_at = null,
+      claimed_by = null,
+      next_attempt_at = now()
+  where n.status = 'claimed' and n.claim_expires_at <= now();
+  perform public.sync_notification_provider_state();
+
   return query
   with due as (
     select n.id
@@ -61,6 +119,7 @@ begin
       and n.next_attempt_at <= now()
       and n.attempts < n.max_attempts
       and n.channel in ('email', 'whatsapp')
+      and public.notification_channel_is_operational(n.channel)
     order by n.next_attempt_at asc
     limit v_limit
     for update skip locked
@@ -69,6 +128,8 @@ begin
     update public.notification_outbox n
     set status = 'claimed',
         claimed_at = now(),
+        claim_expires_at = now() + interval '2 minutes',
+        claimed_by = nullif(trim(coalesce(p_worker_id, '')), ''),
         claim_token = gen_random_uuid(),
         attempts = n.attempts + 1
     from due d
@@ -76,7 +137,7 @@ begin
     returning n.*
   )
   select c.id, c.event_key, c.event_type, c.channel, c.recipient_contact,
-         c.payload, c.status, c.claim_token, c.attempts
+         c.payload, c.status, c.claim_token, c.attempts, c.claim_expires_at
   from claimed c;
 end;
 $$;
@@ -94,10 +155,21 @@ returns void language plpgsql security definer set search_path = '' as $$
 declare
   v_row public.notification_outbox%rowtype;
   v_retry integer := public.config_int('notification_retry_minutes', 15);
+  v_new_status text;
 begin
   if p_status not in ('sent', 'failed', 'skipped', 'blocked') then
     raise exception 'INVALID_NOTIFICATION_STATUS' using errcode = '22023';
   end if;
+  if p_error_code is not null and p_error_code !~ '^[A-Za-z0-9_]{1,120}$' then
+    raise exception 'INVALID_ERROR_CODE' using errcode = '22023';
+  end if;
+  if p_provider is not null and p_provider !~ '^[A-Za-z0-9._-]{2,80}$' then
+    raise exception 'INVALID_PROVIDER_NAME' using errcode = '22023';
+  end if;
+  if p_provider_message_id is not null and p_provider_message_id !~ '^[A-Za-z0-9._:-]{1,200}$' then
+    raise exception 'INVALID_PROVIDER_MESSAGE_ID' using errcode = '22023';
+  end if;
+
   select n.* into v_row from public.notification_outbox n
   where n.id = p_notification_id for update;
   if not found then
@@ -106,26 +178,58 @@ begin
   if v_row.status <> 'claimed' or v_row.claim_token is distinct from p_claim_token then
     raise exception 'NOTIFICATION_CLAIM_MISMATCH' using errcode = '42501';
   end if;
+  if v_row.claim_expires_at is null or v_row.claim_expires_at <= now() then
+    raise exception 'NOTIFICATION_CLAIM_EXPIRED' using errcode = '42501';
+  end if;
 
   if p_status = 'sent' then
+    -- Aucun « sent » sans 2xx, identifiant prestataire et canal opérationnel.
+    if p_provider is null or p_provider_message_id is null
+       or p_http_status is null or p_http_status < 200 or p_http_status > 299
+       or not public.notification_channel_is_operational(v_row.channel) then
+      raise exception 'PROVIDER_CONFIRMATION_REQUIRED' using errcode = '42501';
+    end if;
     update public.notification_outbox
     set status = 'sent', sent_at = now(), provider = p_provider,
         provider_message_id = p_provider_message_id, last_error = null,
-        claim_token = null, claimed_at = null
+        claim_token = null, claimed_at = null, claim_expires_at = null, claimed_by = null
     where id = v_row.id;
   elsif p_status = 'failed' then
+    -- Échec explicite du prestataire uniquement : nouvelle tentative bornée.
+    v_new_status := case when v_row.attempts >= v_row.max_attempts then 'dead' else 'failed' end;
     update public.notification_outbox
-    set status = case when v_row.attempts >= v_row.max_attempts then 'dead' else 'failed' end,
+    set status = v_new_status,
         next_attempt_at = now() + (v_retry * least(v_row.attempts, 5) || ' minutes')::interval,
         last_error = coalesce(p_error_code, 'DELIVERY_FAILED'),
         provider = p_provider,
-        claim_token = null, claimed_at = null
+        claim_token = null, claimed_at = null, claim_expires_at = null, claimed_by = null
     where id = v_row.id;
+    if v_new_status = 'dead' then
+      update public.notification_provider_states s
+      set server_state = 'en_erreur', last_error = coalesce(p_error_code, 'DELIVERY_FAILED'),
+          operational_at = null, updated_at = now()
+      where s.channel = v_row.channel;
+      perform public.sync_notification_provider_state();
+    end if;
   else
+    -- Timeout, absence de confirmation ou secret manquant : état ambigu,
+    -- blocage terminal pour réconciliation humaine. Aucun réessai automatique.
     update public.notification_outbox
     set status = 'blocked', last_error = coalesce(p_error_code, p_status),
-        provider = p_provider, claim_token = null, claimed_at = null
+        provider = p_provider, claim_token = null, claimed_at = null,
+        claim_expires_at = null, claimed_by = null
     where id = v_row.id;
+    if coalesce(p_error_code, '') in (
+      'DELIVERY_TIMEOUT_MANUAL_RECONCILIATION',
+      'EMAIL_PROVIDER_CONFIRMATION_MISSING',
+      'WHATSAPP_PROVIDER_CONFIRMATION_MISSING'
+    ) then
+      update public.notification_provider_states s
+      set server_state = 'en_erreur', last_error = p_error_code,
+          operational_at = null, updated_at = now()
+      where s.channel = v_row.channel;
+      perform public.sync_notification_provider_state();
+    end if;
   end if;
 
   insert into public.notification_attempts
@@ -139,26 +243,212 @@ begin
   insert into public.audit_logs (actor_id, actor_role, action, entity_type, entity_id, metadata)
   values (null, 'system', 'notification_result', 'notification', v_row.id::text,
           jsonb_build_object('status', p_status, 'provider', p_provider,
-                             'http_status', p_http_status, 'attempt', v_row.attempts));
+                             'http_status', p_http_status, 'attempt', v_row.attempts,
+                             'error_code', p_error_code));
 end;
 $$;
 
 create or replace function public.reactivate_blocked_notifications(p_channel text)
 returns void language plpgsql security definer set search_path = '' as $$
 begin
-  if p_channel = 'email' and public.config_bool('email_provider_configured')
+  if p_channel in ('email', 'whatsapp')
+     and public.notification_channel_is_operational(p_channel)
      and public.config_bool('notifications_enabled') then
     update public.notification_outbox
-    set status = 'pending', last_error = null, next_attempt_at = now()
-    where channel = 'email' and status = 'blocked'
-      and last_error in ('EMAIL_PROVIDER_NOT_CONFIGURED', 'NOTIFICATIONS_DISABLED');
-  elsif p_channel = 'whatsapp' and public.config_bool('whatsapp_provider_configured')
-        and public.config_bool('notifications_enabled') then
-    update public.notification_outbox
-    set status = 'pending', last_error = null, next_attempt_at = now()
-    where channel = 'whatsapp' and status = 'blocked'
-      and last_error in ('WHATSAPP_PROVIDER_NOT_CONFIGURED', 'NOTIFICATIONS_DISABLED');
+    set status = 'pending',
+        last_error = null,
+        next_attempt_at = now(),
+        attempts = 0,
+        claim_token = null,
+        claimed_at = null,
+        claim_expires_at = null,
+        claimed_by = null
+    where channel = p_channel
+      and status = 'blocked'
+      and recipient_contact is not null
+      and char_length(trim(recipient_contact)) > 0
+      and last_error in (
+        'NOTIFICATIONS_DISABLED',
+        'EMAIL_PROVIDER_NOT_CONFIGURED',
+        'WHATSAPP_PROVIDER_NOT_CONFIGURED'
+      );
   end if;
+end;
+$$;
+
+
+-- ---------------------------------------------------------------------------
+-- Cycle de vie des prestataires : UNIQUEMENT service_role / opérations serveur.
+-- Aucun de ces RPC n'accepte ou ne renvoie une valeur de secret.
+-- ---------------------------------------------------------------------------
+
+create or replace function public.report_provider_secret_check(
+  p_channel text,
+  p_secrets_present boolean,
+  p_error_code text default null
+)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  v_declared boolean;
+  v_current text;
+  v_state text;
+  v_error text;
+begin
+  if p_channel not in ('email', 'whatsapp') then
+    raise exception 'INVALID_CHANNEL' using errcode = '22023';
+  end if;
+  if p_secrets_present is null then
+    raise exception 'SECRET_CHECK_REQUIRED' using errcode = '22023';
+  end if;
+  if p_error_code is not null and p_error_code !~ '^[A-Za-z0-9_]{1,120}$' then
+    raise exception 'INVALID_ERROR_CODE' using errcode = '22023';
+  end if;
+  select declared_active, server_state into v_declared, v_current
+  from public.notification_provider_states where channel = p_channel;
+  if not found then
+    raise exception 'PROVIDER_STATE_NOT_FOUND' using errcode = 'P0002';
+  end if;
+
+  if not p_secrets_present then
+    v_state := 'non_configure'; v_error := 'SERVER_SECRETS_MISSING';
+  elsif not v_declared then
+    v_state := 'non_configure'; v_error := 'PROVIDER_DECLARATION_MISSING';
+  elsif p_error_code is not null then
+    v_state := 'en_erreur'; v_error := p_error_code;
+  elsif v_current in ('teste', 'operationnel') then
+    v_state := v_current; v_error := null;
+  else
+    v_state := 'configure'; v_error := null;
+  end if;
+
+  update public.notification_provider_states
+  set secrets_present = p_secrets_present,
+      last_secret_check_at = now(),
+      server_state = v_state,
+      last_error = v_error,
+      operational_at = case when v_state = 'operationnel' then operational_at else null end,
+      last_provider_message_id = case when v_state in ('teste', 'operationnel') then last_provider_message_id else null end,
+      last_provider_test_at = case when v_state in ('teste', 'operationnel') then last_provider_test_at else null end,
+      updated_at = now()
+  where channel = p_channel;
+  perform public.sync_notification_provider_state();
+
+  insert into public.audit_logs (actor_id, actor_role, action, entity_type, entity_id, metadata)
+  values (null, 'system', 'provider_secret_checked', 'notification_provider_state', p_channel,
+          jsonb_build_object('secrets_present', p_secrets_present,
+                             'declared_active', v_declared,
+                             'server_state', v_state,
+                             'error_code', v_error));
+end;
+$$;
+
+create or replace function public.report_provider_error(
+  p_channel text,
+  p_error_code text
+)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if p_channel not in ('email', 'whatsapp') then
+    raise exception 'INVALID_CHANNEL' using errcode = '22023';
+  end if;
+  if p_error_code is null or p_error_code !~ '^[A-Za-z0-9_]{1,120}$' then
+    raise exception 'INVALID_ERROR_CODE' using errcode = '22023';
+  end if;
+  update public.notification_provider_states
+  set server_state = 'en_erreur', last_error = p_error_code,
+      operational_at = null, updated_at = now()
+  where channel = p_channel;
+  perform public.sync_notification_provider_state();
+  insert into public.audit_logs (actor_id, actor_role, action, entity_type, entity_id, metadata)
+  values (null, 'system', 'provider_error', 'notification_provider_state', p_channel,
+          jsonb_build_object('error_code', p_error_code, 'server_state', 'en_erreur'));
+end;
+$$;
+
+create or replace function public.record_provider_test_result(
+  p_channel text,
+  p_provider_message_id text,
+  p_http_status integer,
+  p_error_code text default null
+)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  v_declared boolean;
+  v_secrets boolean;
+begin
+  if p_channel not in ('email', 'whatsapp') then
+    raise exception 'INVALID_CHANNEL' using errcode = '22023';
+  end if;
+  if p_error_code is not null and p_error_code !~ '^[A-Za-z0-9_]{1,120}$' then
+    raise exception 'INVALID_ERROR_CODE' using errcode = '22023';
+  end if;
+  select declared_active, secrets_present into v_declared, v_secrets
+  from public.notification_provider_states where channel = p_channel;
+  if not found then
+    raise exception 'PROVIDER_STATE_NOT_FOUND' using errcode = 'P0002';
+  end if;
+  if not v_declared or not v_secrets then
+    perform public.report_provider_error(p_channel, 'PROVIDER_TEST_REQUIRED');
+    return;
+  end if;
+  if p_error_code is not null
+     or p_provider_message_id is null
+     or p_provider_message_id !~ '^[A-Za-z0-9._:-]{1,200}$'
+     or p_http_status is null or p_http_status < 200 or p_http_status > 299 then
+    perform public.report_provider_error(p_channel, 'PROVIDER_TEST_NOT_CONFIRMED');
+    return;
+  end if;
+
+  update public.notification_provider_states s
+  set server_state = 'teste',
+      last_provider_message_id = p_provider_message_id,
+      last_provider_test_at = now(),
+      last_error = null,
+      operational_at = null,
+      updated_at = now()
+  where s.channel = p_channel;
+  perform public.sync_notification_provider_state();
+  insert into public.audit_logs (actor_id, actor_role, action, entity_type, entity_id, metadata)
+  values (null, 'system', 'provider_test_confirmed', 'notification_provider_state', p_channel,
+          jsonb_build_object('http_status', p_http_status, 'server_state', 'teste'));
+end;
+$$;
+
+create or replace function public.mark_provider_operational(
+  p_channel text,
+  p_reason text
+)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  v_declared boolean;
+  v_secrets boolean;
+  v_state text;
+begin
+  if p_channel not in ('email', 'whatsapp') then
+    raise exception 'INVALID_CHANNEL' using errcode = '22023';
+  end if;
+  if p_reason is null or char_length(trim(p_reason)) < 10 then
+    raise exception 'REASON_REQUIRED' using errcode = '22023';
+  end if;
+  select declared_active, secrets_present, server_state
+  into v_declared, v_secrets, v_state
+  from public.notification_provider_states where channel = p_channel;
+  if not found then
+    raise exception 'PROVIDER_STATE_NOT_FOUND' using errcode = 'P0002';
+  end if;
+  if not v_declared or not v_secrets or v_state <> 'teste' then
+    raise exception 'PROVIDER_TEST_REQUIRED' using errcode = '42501';
+  end if;
+
+  update public.notification_provider_states
+  set server_state = 'operationnel', operational_at = now(),
+      last_error = null, updated_at = now()
+  where channel = p_channel;
+  perform public.sync_notification_provider_state();
+  perform public.reactivate_blocked_notifications(p_channel);
+  insert into public.audit_logs (actor_id, actor_role, action, entity_type, entity_id, metadata)
+  values (null, 'system', 'provider_marked_operational', 'notification_provider_state', p_channel,
+          jsonb_build_object('server_state', 'operationnel', 'reason_length', char_length(trim(p_reason))));
 end;
 $$;
 
@@ -174,10 +464,12 @@ create or replace function public.admin_set_platform_flag(
 returns void language plpgsql security definer set search_path = '' as $$
 declare
   v_bool boolean;
-  v_allowed text[] := array['commercial_open','legal_validation_complete',
-                            'notifications_enabled','pricing_config_validated'];
+  v_allowed text[] := array['commercial_open','legal_validation_complete','pricing_config_validated'];
 begin
   perform public.assert_admin();
+  if p_key = 'notifications_enabled' then
+    raise exception 'NOTIFICATION_ACTIVATION_SERVER_ONLY' using errcode = '42501';
+  end if;
   if p_key is null or not (p_key = any(v_allowed)) then
     raise exception 'UNSUPPORTED_FLAG' using errcode = '22023';
   end if;
@@ -192,17 +484,12 @@ begin
   if p_key = 'legal_validation_complete' and v_bool and not public.legal_gate_complete() then
     raise exception 'LEGAL_VALIDATIONS_INCOMPLETE' using errcode = '42501';
   end if;
-  if p_key = 'notifications_enabled' and v_bool
-     and not (public.config_bool('email_provider_configured') or public.config_bool('whatsapp_provider_configured')) then
-    raise exception 'NO_NOTIFICATION_PROVIDER_CONFIGURED' using errcode = '42501';
-  end if;
   if p_key = 'commercial_open' and v_bool then
     if not public.config_bool('legal_validation_complete') then
       raise exception 'LEGAL_VALIDATION_REQUIRED' using errcode = '42501';
     end if;
-    if not public.config_bool('notifications_enabled') then
-      raise exception 'NOTIFICATIONS_REQUIRED' using errcode = '42501';
-    end if;
+    -- Aucune dépendance à un prestataire payant : les notifications internes
+    -- restent disponibles, les canaux externes non opérationnels restent bloqués.
     if not public.config_bool('pricing_config_validated') then
       raise exception 'PRICING_VALIDATION_REQUIRED' using errcode = '42501';
     end if;
@@ -220,7 +507,7 @@ begin
     set value = excluded.value, updated_by = excluded.updated_by, updated_at = now();
 
   perform public.audit_event('platform_flag_changed', 'platform_config', p_key,
-    jsonb_build_object('value', p_value, 'reason', p_reason));
+    jsonb_build_object('value', p_value, 'reason_length', char_length(trim(p_reason))));
 end;
 $$;
 
@@ -291,40 +578,54 @@ create or replace function public.admin_set_provider_config(
   p_reason text
 )
 returns void language plpgsql security definer set search_path = '' as $$
-declare
-  v_flag text;
-  v_name_key text;
 begin
   perform public.assert_admin();
   if p_channel not in ('email','whatsapp') then
     raise exception 'INVALID_CHANNEL' using errcode = '22023';
   end if;
-  if p_configured is null or p_provider_name is null or char_length(trim(p_provider_name)) < 2 then
+  if p_configured is null or p_provider_name is null
+     or char_length(trim(p_provider_name)) not between 2 and 120 then
     raise exception 'PROVIDER_NAME_REQUIRED' using errcode = '22023';
   end if;
   if p_reason is null or char_length(trim(p_reason)) < 10 then
     raise exception 'REASON_REQUIRED' using errcode = '22023';
   end if;
-  v_flag := case when p_channel = 'email'
-    then 'email_provider_configured' else 'whatsapp_provider_configured' end;
-  v_name_key := case when p_channel = 'email'
-    then 'email_provider_name' else 'whatsapp_provider_name' end;
-
-  insert into public.platform_config (key, value, description, updated_by, updated_at)
-  values (v_flag, to_jsonb(p_configured), 'Configuration du prestataire (sans secret)', auth.uid(), now())
-  on conflict (key) do update set value = excluded.value, updated_by = excluded.updated_by, updated_at = now();
-  insert into public.platform_config (key, value, description, updated_by, updated_at)
-  values (v_name_key, to_jsonb(trim(p_provider_name)), 'Nom du prestataire officiel', auth.uid(), now())
-  on conflict (key) do update set value = excluded.value, updated_by = excluded.updated_by, updated_at = now();
-
-  if public.config_bool('email_provider_configured') or public.config_bool('whatsapp_provider_configured') then
-    insert into public.platform_config (key, value, description, updated_by, updated_at)
-    values ('notifications_enabled', 'true'::jsonb, 'Au moins un canal officiel configuré', auth.uid(), now())
-    on conflict (key) do update set value = excluded.value, updated_by = excluded.updated_by, updated_at = now();
+  -- Un secret ne doit jamais être collé dans un champ libre, un audit ou une réponse RPC.
+  if p_provider_name ~* '(sb_secret_|sk_live_|service_role|Bearer[[:space:]]+[A-Za-z0-9._-]{20,})'
+     or p_reason ~* '(sb_secret_|sk_live_|Bearer[[:space:]]+[A-Za-z0-9._-]{20,})' then
+    raise exception 'PROVIDER_SECRET_FORBIDDEN' using errcode = '42501';
   end if;
-  perform public.reactivate_blocked_notifications(p_channel);
-  perform public.audit_event('notification_provider_configured', 'platform_config', v_flag,
-    jsonb_build_object('configured', p_configured, 'provider', p_provider_name, 'reason', p_reason));
+
+  update public.notification_provider_states
+  set declared_provider_name = trim(p_provider_name),
+      declared_active = p_configured,
+      declared_by = auth.uid(),
+      declared_at = now(),
+      updated_at = now()
+  where channel = p_channel;
+  if not found then
+    raise exception 'PROVIDER_STATE_NOT_FOUND' using errcode = 'P0002';
+  end if;
+
+  -- Retirer une déclaration désactive le canal ; la déclarer ne l'active JAMAIS.
+  if not p_configured then
+    update public.notification_provider_states
+    set server_state = 'non_configure',
+        secrets_present = false,
+        last_secret_check_at = now(),
+        last_provider_message_id = null,
+        last_provider_test_at = null,
+        operational_at = null,
+        last_error = 'PROVIDER_DECLARATION_WITHDRAWN'
+    where channel = p_channel;
+    perform public.sync_notification_provider_state();
+  end if;
+
+  insert into public.audit_logs (actor_id, actor_role, action, entity_type, entity_id, metadata)
+  values (auth.uid(), 'admin', 'notification_provider_declared', 'notification_provider_state', p_channel,
+          jsonb_build_object('declared_active', p_configured,
+                             'provider', trim(p_provider_name),
+                             'reason_length', char_length(trim(p_reason))));
 end;
 $$;
 
@@ -792,7 +1093,17 @@ begin
       ) x), '[]'::jsonb),
     'platform_config', coalesce((
       select jsonb_object_agg(key, value) from public.platform_config
+      where key in ('commercial_open','legal_validation_complete','notifications_enabled',
+                    'email_provider_configured','whatsapp_provider_configured',
+                    'email_provider_state','whatsapp_provider_state','pricing_config_validated')
     ), '{}'::jsonb),
+    'notification_provider_states', coalesce((
+      select jsonb_agg(to_jsonb(x)) from (
+        select channel, declared_provider_name, declared_active, server_state,
+               secrets_present, last_secret_check_at, last_provider_test_at,
+               operational_at, last_error, updated_at
+        from public.notification_provider_states order by channel
+      ) x), '[]'::jsonb),
     'prohibited_categories', coalesce((
       select jsonb_agg(to_jsonb(x)) from (
         select code, label, restriction, is_legally_validated, validation_reference
@@ -855,7 +1166,8 @@ revoke all privileges on all sequences in schema public from public, anon, authe
 revoke all on all functions in schema public from public, anon, authenticated;
 
 grant select on public.available_trips to anon, authenticated;
-grant select on public.prohibited_categories, public.platform_config to anon, authenticated;
+grant select on public.prohibited_categories to anon, authenticated;
+-- platform_config et notification_provider_states ne sont jamais exposés directement.
 grant select (id, origin_country_code, destination_country_code, origin_label,
               destination_label, is_active, rules_url, legal_validation_ref)
   on public.corridors to anon, authenticated;
@@ -865,8 +1177,8 @@ grant select on public.profiles, public.user_roles, public.gp_verifications,
   public.gp_verification_events, public.verification_documents, public.trip_alerts,
   public.parcel_requests, public.bookings, public.passport_events, public.incidents,
   public.incident_notes, public.incident_evidence, public.legal_validations,
-  public.booking_event_rules, public.audit_logs, public.prohibited_categories,
-  public.platform_config to authenticated;
+  public.booking_event_rules, public.audit_logs, public.prohibited_categories
+  to authenticated;
 grant select (id, gp_id, corridor_id, origin_city, destination_city, departure_at, arrival_at,
               capacity_total_kg, capacity_remaining_kg, currency, price_per_kg, conditions,
               status, created_at, updated_at, published_at, cancelled_at, suspended_at,
@@ -917,6 +1229,10 @@ begin
     execute $sql$ grant execute on function public.bootstrap_first_admin(uuid) to service_role $sql$;
     execute $sql$ grant execute on function public.claim_notifications(integer, text) to service_role $sql$;
     execute $sql$ grant execute on function public.record_notification_result(uuid, uuid, text, text, text, integer, text) to service_role $sql$;
+    execute $sql$ grant execute on function public.report_provider_secret_check(text, boolean, text) to service_role $sql$;
+    execute $sql$ grant execute on function public.report_provider_error(text, text) to service_role $sql$;
+    execute $sql$ grant execute on function public.record_provider_test_result(text, text, integer, text) to service_role $sql$;
+    execute $sql$ grant execute on function public.mark_provider_operational(text, text) to service_role $sql$;
   end if;
 end $do$;
 
@@ -925,6 +1241,15 @@ alter default privileges for role postgres in schema public
 alter default privileges for role postgres in schema public
   revoke all on sequences from public, anon, authenticated;
 alter default privileges for role postgres in schema public
+  revoke all on functions from public, anon, authenticated;
+
+-- Le rôle exécutant la migration peut différer sur Supabase : verrouiller aussi
+-- les privilèges par défaut du rôle courant, pas seulement ceux de postgres.
+alter default privileges in schema public
+  revoke all on tables from public, anon, authenticated;
+alter default privileges in schema public
+  revoke all on sequences from public, anon, authenticated;
+alter default privileges in schema public
   revoke all on functions from public, anon, authenticated;
 
 commit;

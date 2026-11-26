@@ -23,6 +23,14 @@
     dead: "Échec définitif", skipped: "Ignoré"
   };
 
+  const PROVIDER_STATE_LABELS = {
+    non_configure: "Non configuré",
+    configure: "Configuré (secrets serveur détectés)",
+    teste: "Testé (confirmation prestataire)",
+    operationnel: "Opérationnel",
+    en_erreur: "En erreur"
+  };
+
   const EVENT_LABELS = {
     parcel_received: "Colis pris en charge", inspection_recorded: "Contrôle du contenu déclaré",
     departure_reported: "Départ confirmé", arrival_reported: "Arrivée confirmée",
@@ -57,6 +65,9 @@
     [/DELIVERY_CODE_NOT_ISSUED/, "Aucun code de remise n’a encore été généré pour ce colis."],
     [/NOT_BOOKING_GP|NOT_BOOKING_SENDER|NOT_BOOKING_PARTICIPANT|NOT_TRIP_OWNER|OWN_/, "Vous n’êtes pas autorisé sur ce dossier."],
     [/ACTIVE_BOOKINGS_PRESENT|TRIP_LOCKED_BY_BOOKINGS/, "Ce trajet comporte des réservations actives : contactez l’administration."],
+    [/PROVIDER_SECRET_FORBIDDEN/, "N’indiquez aucun secret dans un formulaire : les secrets restent exclusivement côté serveur."],
+    [/NOTIFICATION_ACTIVATION_SERVER_ONLY/, "L’activation des notifications externes est dérivée d’un test prestataire confirmé côté serveur, jamais d’un bouton administrateur."],
+    [/PROVIDER_TEST_REQUIRED|PROVIDER_CONFIRMATION_REQUIRED/, "Une confirmation réelle du prestataire est requise avant toute activation ou marquage envoyé."],
     [/PERMISSION_DENIED|permission denied/i, "Action refusée par les autorisations serveur."],
     [/Failed to fetch|NetworkError|fetch failed/i, "Connexion au service indisponible. Réessayez."]
   ];
@@ -80,15 +91,16 @@
     verificationDocuments: [],
     tripAlerts: [],
     prohibitedCategories: [],
-    platformConfig: [],
     adminOverview: null,
     backendError: null,
+    dashboardFeedback: null,
     selectedTrip: null,
     requestIdempotencyKey: null,
     environment: "production"
   };
 
   function statusLabel(value) { return STATUS_LABELS[value] || String(value ?? "—"); }
+  function providerStateLabel(value) { return PROVIDER_STATE_LABELS[value] || String(value ?? "Non configuré"); }
   function eventLabel(value) { return EVENT_LABELS[value] || statusLabel(value); }
   function boolLabel(value) { return value ? "Oui" : "Non"; }
   function formatMoney(value, currency) {
@@ -106,12 +118,17 @@
     el.textContent = message;
     el.dataset.kind = kind || "info";
   }
-  function setDashboardFeedback(message, kind) {
+  function applyDashboardFeedback() {
     const el = $("#dashboard-feedback");
-    if (!el) return;
+    const feedback = state.dashboardFeedback;
+    if (!el || !feedback) return;
     el.hidden = false;
-    el.textContent = message;
-    el.dataset.kind = kind || "info";
+    el.textContent = feedback.message;
+    el.dataset.kind = feedback.kind || "info";
+  }
+  function setDashboardFeedback(message, kind) {
+    state.dashboardFeedback = { message: String(message), kind: kind || "info" };
+    applyDashboardFeedback();
   }
   function friendlyError(error) {
     const raw = String(error && (error.message || error) || "Erreur inconnue");
@@ -248,11 +265,10 @@
       select("delivery_code_status"),
       select("verification_documents", function (q) { return q.order("uploaded_at", { ascending: false }).limit(50); }),
       select("trip_alerts", function (q) { return q.order("created_at", { ascending: false }).limit(50); }),
-      select("prohibited_categories", function (q) { return q.order("code"); }),
-      select("platform_config")
+      select("prohibited_categories", function (q) { return q.order("code"); })
     ]);
     const names = ["trips", "requests", "bookings", "passportEvents", "incidents", "notifications",
-      "deliveryCodeStatus", "verificationDocuments", "tripAlerts", "prohibitedCategories", "platformConfig"];
+      "deliveryCodeStatus", "verificationDocuments", "tripAlerts", "prohibitedCategories"];
     const failures = [];
     results.forEach(function (result, index) {
       if (result.status === "fulfilled") state[names[index]] = result.value;
@@ -329,6 +345,7 @@
       default: content += renderOverviewTab();
     }
     root.innerHTML = tabBar() + '<div class="platform-feedback" id="dashboard-feedback" role="status" aria-live="polite" hidden></div>' + content;
+    applyDashboardFeedback();
   }
 
   function renderOverviewTab() {
@@ -336,6 +353,7 @@
     const profile = me.profile || {};
     const verification = me.gp_verification || null;
     const config = me.config || {};
+    const providerStates = me.notification_provider_states || {};
     const rows = [
       ["Compte", me.email || "—"],
       ["E-mail confirmé", boolLabel(me.email_verified)],
@@ -349,8 +367,8 @@
       ["Ouverture commerciale", config.commercial_open],
       ["Validations juridiques", config.legal_validation_complete],
       ["Notifications externes", config.notifications_enabled],
-      ["Prestataire e-mail", config.email_provider_configured],
-      ["WhatsApp officiel", config.whatsapp_provider_configured],
+      ["État e-mail", providerStateLabel((providerStates.email || {}).server_state || config.email_provider_state)],
+      ["État WhatsApp", providerStateLabel((providerStates.whatsapp || {}).server_state || config.whatsapp_provider_state)],
       ["Tarification validée", config.pricing_config_validated]
     ];
     const checks = verification ? [
@@ -589,7 +607,7 @@
     }).join("");
     const blocked = (state.notifications || []).filter(function (n) { return n.status === "blocked"; }).length;
     return '<section class="platform-card"><h3>Historique des notifications</h3>' +
-      '<div class="platform-alert platform-alert-warning">Les lignes « bloqué (aucun envoi) » correspondent à des événements enregistrés sans prestataire configuré. Aucun e-mail ni message WhatsApp n’est prétendu envoyé.</div>' +
+      '<div class="platform-alert platform-alert-warning">Les lignes « bloqué (aucun envoi) » correspondent à des événements enregistrés sans canal serveur opérationnel. Aucun e-mail ni message WhatsApp n’est prétendu envoyé ; une déclaration administrateur n’active jamais un canal.</div>' +
       '<p class="platform-small">Lignes bloquées : ' + esc(blocked) + ".</p>" +
       (rows ? table(["Événement", "Canal", "Statut", "Tentatives", "Créée le", "Motif"], rows)
         : '<p class="platform-empty">Aucune notification.</p>') +
@@ -616,13 +634,21 @@
     const audit = o.audit_logs || [];
     const notifications = o.notifications || [];
     const config = o.platform_config || {};
+    const providerStates = o.notification_provider_states || [];
+    const providerRows = providerStates.map(function (p) {
+      return "<tr><td>" + esc(p.channel) + "</td><td>" + esc(p.declared_provider_name || "—") +
+        "</td><td>" + esc(providerStateLabel(p.server_state)) + "</td><td>" + esc(boolLabel(p.declared_active)) +
+        "</td><td>" + esc(boolLabel(p.secrets_present)) + "</td><td>" + esc(p.last_error || "—") + "</td></tr>";
+    }).join("");
     const userOptions = optionsFrom(users, "id", function (u) { return (u.display_name || u.id.slice(0, 8)) + " · " + statusLabel(u.status); }, "Choisir un compte");
     return '<div class="platform-grid">' +
       '<section class="platform-card"><h3>Tableau de bord administration</h3><dl class="platform-list">' +
         ["profiles", "pending_gp", "trips", "requests", "bookings", "open_incidents", "blocked_notifications"].map(function (key) {
           return "<dt>" + esc(key) + "</dt><dd>" + esc(counts[key] ?? 0) + "</dd>";
         }).join("") + "</dl>" +
-        '<p class="platform-small">Drapeaux serveur : ' + esc(Object.keys(config).map(function (k) { return k + "=" + JSON.stringify(config[k]); }).join(" · ")) + "</p></section>" +
+        '<p class="platform-small">Drapeaux serveur : ' + esc(Object.keys(config).map(function (k) { return k + "=" + JSON.stringify(config[k]); }).join(" · ")) + "</p>" +
+        (providerRows ? table(["Canal", "Prestataire déclaré", "État serveur", "Déclaration", "Secrets serveur", "Dernier code"], providerRows)
+          : '<p class="platform-empty">Aucun état de prestataire disponible.</p>') + "</section>" +
       '<section class="platform-card"><h3>Contrôle GP</h3>' +
         '<form class="platform-form" data-form="admin-review-gp">' +
           '<label>Compte<select name="user_id" required>' + userOptions + "</select></label>" +
@@ -652,15 +678,17 @@
           field("Motif", "reason", "text", true) +
           '<button class="button button-secondary" type="submit">Marquer validée juridiquement</button>' +
         "</form>" +
+        '<div class="platform-alert platform-alert-warning">La déclaration administrative n’active aucun envoi. Les secrets sont vérifiés côté serveur ; « testé » exige une confirmation prestataire et « opérationnel » une activation service_role explicite.</div>' +
         '<form class="platform-form" data-form="admin-provider-config">' +
           '<label>Canal<select name="channel"><option value="email">E-mail</option><option value="whatsapp">WhatsApp Cloud API officielle</option></select></label>' +
-          field("Nom du prestataire", "provider", "text", true) +
+          field("Nom du prestataire déclaré", "provider", "text", true) +
           field("Justification", "reason", "text", true) +
-          '<label class="platform-check"><input name="configured" type="checkbox" checked> Prestataire configuré côté serveur (aucun secret dans ce formulaire)</label>' +
-          '<button class="button button-secondary" type="submit">Enregistrer la configuration</button>' +
+          '<label class="platform-check"><input name="configured" type="checkbox" checked> Déclaration administrative active (aucun secret dans ce formulaire)</label>' +
+          '<button class="button button-secondary" type="submit">Enregistrer la déclaration</button>' +
         "</form>" +
         '<form class="platform-form" data-form="admin-platform-flag">' +
-          '<label>Drapeau<select name="key"><option value="legal_validation_complete">Validations juridiques complètes</option><option value="notifications_enabled">Notifications externes</option><option value="pricing_config_validated">Tarification validée</option><option value="commercial_open">Ouverture commerciale</option></select></label>' +
+          '<label>Drapeau<select name="key"><option value="legal_validation_complete">Validations juridiques complètes</option><option value="pricing_config_validated">Tarification validée</option><option value="commercial_open">Ouverture commerciale</option></select></label>' +
+          '<p class="platform-small">L’activation des notifications externes n’est pas un drapeau administrateur : elle est dérivée d’un état serveur opérationnel.</p>' +
           field("Motif détaillé", "reason", "text", true) +
           '<label class="platform-check"><input name="value" type="checkbox" checked> Activer</label>' +
           '<button class="button button-primary" type="submit">Modifier le drapeau</button>' +
@@ -1054,7 +1082,7 @@
           p_channel: value(data, "channel"), p_configured: checked(data, "configured"),
           p_provider_name: value(data, "provider"), p_reason: value(data, "reason")
         });
-        setDashboardFeedback("Configuration du prestataire enregistrée. Les secrets restent côté serveur.", "ok");
+        setDashboardFeedback("Déclaration enregistrée et auditée. Aucun canal n’a été activé et aucun secret n’a été transmis.", "ok");
         await refresh(); return;
       case "admin-platform-flag":
         await rpc("admin_set_platform_flag", {
@@ -1107,6 +1135,19 @@
     }
   }
 
+  function setButtonBusy(button, busy) {
+    if (!button) return;
+    if (busy) {
+      button.dataset.wasDisabled = button.disabled ? "true" : "false";
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+    } else {
+      if (button.dataset.wasDisabled !== "true") button.disabled = false;
+      button.removeAttribute("aria-busy");
+      delete button.dataset.wasDisabled;
+    }
+  }
+
   function safeFileName(name) {
     return String(name || "document").replace(/[^A-Za-z0-9._-]/g, "_").slice(-80);
   }
@@ -1117,7 +1158,7 @@
       if (!form) return;
       event.preventDefault();
       const button = form.querySelector('button[type="submit"]');
-      if (button) button.disabled = true;
+      setButtonBusy(button, true);
       try {
         await handleForm(form.dataset.form, form, new FormData(form));
       } catch (error) {
@@ -1129,7 +1170,8 @@
       } finally {
         // Un formulaire à écriture unique (ex. demande de colis) reste verrouillé
         // après succès afin d'empêcher une seconde soumission par double clic.
-        if (button && button.dataset.submitted !== "true") button.disabled = false;
+        if (button && button.dataset.submitted !== "true") setButtonBusy(button, false);
+        else if (button) button.removeAttribute("aria-busy");
       }
     });
 
@@ -1157,10 +1199,10 @@
       const button = event.target.closest("[data-action]");
       if (!button) return;
       event.preventDefault();
-      button.disabled = true;
+      setButtonBusy(button, true);
       try { await handleAction(button.dataset.action, button.dataset); }
       catch (error) { setDashboardFeedback(friendlyError(error), "error"); setAuthStatus(friendlyError(error), "error"); }
-      finally { button.disabled = false; }
+      finally { setButtonBusy(button, false); }
     });
   }
 

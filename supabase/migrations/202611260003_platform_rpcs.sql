@@ -28,6 +28,20 @@ returns integer language sql stable security definer set search_path = '' as $$
   ), p_default);
 $$;
 
+-- Un canal externe n'est « opérationnel » que si une déclaration administrative,
+-- des secrets côté serveur, un test confirmé par le prestataire et une activation
+-- service_role ont été enregistrés. Cette fonction interne n'est pas exposée au client.
+create or replace function public.notification_channel_is_operational(p_channel text)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.notification_provider_states s
+    where s.channel = p_channel
+      and s.declared_active
+      and s.secrets_present
+      and s.server_state = 'operationnel'
+  );
+$$;
+
 create or replace function public.assert_active_account(
   p_require_verified_email boolean default true,
   p_require_complete_profile boolean default true
@@ -178,21 +192,25 @@ begin
     raise exception 'INVALID_CHANNEL' using errcode = '22023';
   end if;
 
+  -- « in_app » désigne une ligne disponible dans la boîte de réception interne,
+  -- pas un envoi externe. Aucun prestataire ni coût n'est nécessaire.
   if p_channel = 'in_app' then
     v_status := 'sent';
     v_error := null;
     v_attempt_status := 'sent';
+  elsif p_channel in ('email', 'whatsapp')
+        and (p_recipient_contact is null or char_length(trim(p_recipient_contact)) = 0) then
+    v_status := 'blocked';
+    v_error := 'RECIPIENT_CONTACT_MISSING';
+    v_attempt_status := 'blocked';
   elsif not public.config_bool('notifications_enabled') then
     v_status := 'blocked';
     v_error := 'NOTIFICATIONS_DISABLED';
     v_attempt_status := 'blocked';
-  elsif p_channel = 'email' and not public.config_bool('email_provider_configured') then
+  elsif not public.notification_channel_is_operational(p_channel) then
     v_status := 'blocked';
-    v_error := 'EMAIL_PROVIDER_NOT_CONFIGURED';
-    v_attempt_status := 'blocked';
-  elsif p_channel = 'whatsapp' and not public.config_bool('whatsapp_provider_configured') then
-    v_status := 'blocked';
-    v_error := 'WHATSAPP_PROVIDER_NOT_CONFIGURED';
+    v_error := case when p_channel = 'email'
+      then 'EMAIL_PROVIDER_NOT_CONFIGURED' else 'WHATSAPP_PROVIDER_NOT_CONFIGURED' end;
     v_attempt_status := 'blocked';
   else
     v_status := 'pending';
@@ -418,8 +436,7 @@ begin
 end;
 $$;
 
-drop function if exists public.list_trip_corridors();
-create function public.list_trip_corridors()
+create or replace function public.list_trip_corridors()
 returns table (
   id uuid,
   origin_country_code text,
@@ -459,11 +476,23 @@ begin
       select to_jsonb(v) - 'review_notes' - 'last_submission_key'
       from public.gp_verifications v where v.user_id = v_uid
     ),
+    'notification_provider_states', coalesce((
+      select jsonb_object_agg(s.channel, jsonb_build_object(
+        'server_state', s.server_state,
+        'declared_active', s.declared_active,
+        'secrets_present', s.secrets_present,
+        'last_secret_check_at', s.last_secret_check_at,
+        'operational_at', s.operational_at,
+        'last_error', s.last_error
+      ))
+      from public.notification_provider_states s
+    ), '{}'::jsonb),
     'config', coalesce((
       select jsonb_object_agg(c.key, c.value)
       from public.platform_config c
       where c.key in ('commercial_open','legal_validation_complete','notifications_enabled',
-                      'email_provider_configured','whatsapp_provider_configured','pricing_config_validated')
+                      'email_provider_configured','whatsapp_provider_configured',
+                      'email_provider_state','whatsapp_provider_state','pricing_config_validated')
     ), '{}'::jsonb),
     'prohibited_categories_legally_validated', coalesce((
       select bool_and(pc.is_legally_validated) from public.prohibited_categories pc
@@ -1779,24 +1808,29 @@ returns table (
   event_hash text
 )
 language sql stable security definer set search_path = '' as $$
-  with target as (
-    select b.id as booking_id, b.status::text as current_status, null::uuid as request_id
-    from public.bookings b where b.parcel_code = upper(trim(p_parcel_code))
-    union all
-    select null::uuid, r.status::text, r.id
-    from public.parcel_requests r where r.parcel_code = upper(trim(p_parcel_code))
+  with code as (
+    select upper(trim(p_parcel_code)) as value
+  ),
+  target as (
+    select coalesce(
+      (select b.status::text from public.bookings b, code c
+        where b.parcel_code = c.value order by b.created_at desc limit 1),
+      (select r.status::text from public.parcel_requests r, code c
+        where r.parcel_code = c.value order by r.created_at desc limit 1)
+    ) as current_status
   )
   select
-    upper(trim(p_parcel_code)),
+    c.value,
     t.current_status,
     e.event_type::text,
     coalesce(e.payload ->> 'label', e.event_type::text),
     e.occurred_at,
     e.sequence_no,
     e.event_hash
-  from target t
+  from code c
+  join target t on t.current_status is not null
   join public.passport_events e
-    on e.parcel_code = upper(trim(p_parcel_code))
+    on e.parcel_code = c.value
    and e.visible_to_public = true
   order by e.sequence_no asc;
 $$;

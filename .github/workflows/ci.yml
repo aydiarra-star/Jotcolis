@@ -19,7 +19,11 @@ jobs:
           cache: npm
       - name: Install test dependencies
         run: npm ci
-      - name: Tests SQL, frontend and build
+      - name: Tests complets
         run: npm test
+      - name: Tests SQL ciblés
+        run: npm run test:sql
+      - name: Tests frontend ciblés
+        run: npm run test:frontend
       - name: Build static preview
         run: npm run build

@@ -151,6 +151,8 @@ create table if not exists public.notification_outbox (
   max_attempts integer not null default 5,
   next_attempt_at timestamptz not null default now(),
   claimed_at timestamptz,
+  claim_expires_at timestamptz,
+  claimed_by text,
   claim_token uuid,
   provider text,
   provider_message_id text,
@@ -164,6 +166,12 @@ create index if not exists notification_outbox_due_idx
 create index if not exists notification_outbox_recipient_idx
   on public.notification_outbox (recipient_user_id, created_at desc);
 
+-- Compatibilité avec une base où la table existait avant l'ajout du bail.
+alter table public.notification_outbox add column if not exists claim_expires_at timestamptz;
+alter table public.notification_outbox add column if not exists claimed_by text;
+create index if not exists notification_outbox_claim_expiry_idx
+  on public.notification_outbox (claim_expires_at) where status = 'claimed';
+
 create table if not exists public.notification_attempts (
   id uuid primary key default gen_random_uuid(),
   notification_id uuid not null references public.notification_outbox(id) on delete cascade,
@@ -176,6 +184,32 @@ create table if not exists public.notification_attempts (
   created_at timestamptz not null default now(),
   unique (notification_id, attempt_no)
 );
+
+-- États serveur des canaux externes. Aucune valeur de secret n'est stockée ici :
+-- secrets_present est un booléen calculé exclusivement par l'Edge Function serveur.
+create table if not exists public.notification_provider_states (
+  channel text primary key check (channel in ('email', 'whatsapp')),
+  declared_provider_name text check (declared_provider_name is null or char_length(declared_provider_name) between 2 and 120),
+  declared_active boolean not null default false,
+  declared_by uuid references public.profiles(id) on delete set null,
+  declared_at timestamptz,
+  server_state text not null default 'non_configure'
+    check (server_state in ('non_configure', 'configure', 'teste', 'operationnel', 'en_erreur')),
+  secrets_present boolean not null default false,
+  last_secret_check_at timestamptz,
+  last_provider_message_id text
+    check (last_provider_message_id is null or char_length(last_provider_message_id) between 1 and 200),
+  last_provider_test_at timestamptz,
+  operational_at timestamptz,
+  last_error text check (last_error is null or last_error ~ '^[A-Za-z0-9_]{1,120}$'),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+insert into public.notification_provider_states (channel, server_state, last_error) values
+  ('email', 'non_configure', 'SERVER_SECRETS_MISSING'),
+  ('whatsapp', 'non_configure', 'SERVER_SECRETS_MISSING')
+on conflict (channel) do nothing;
 
 create table if not exists public.delivery_codes (
   id uuid primary key default gen_random_uuid(),
@@ -373,6 +407,8 @@ alter table public.legal_validations enable row level security;
 alter table public.prohibited_categories enable row level security;
 alter table public.trip_alerts enable row level security;
 alter table public.notification_outbox enable row level security;
+alter table public.notification_provider_states enable row level security;
+-- Aucune policy client : la table n'est lisible que via les RPC SECURITY DEFINER contrôlées.
 alter table public.notification_attempts enable row level security;
 alter table public.delivery_codes enable row level security;
 alter table public.incident_notes enable row level security;
@@ -608,6 +644,9 @@ create trigger trip_alerts_set_updated_at before update on public.trip_alerts
 drop trigger if exists notification_outbox_set_updated_at on public.notification_outbox;
 create trigger notification_outbox_set_updated_at before update on public.notification_outbox
   for each row execute function public.set_updated_at();
+drop trigger if exists notification_provider_states_set_updated_at on public.notification_provider_states;
+create trigger notification_provider_states_set_updated_at before update on public.notification_provider_states
+  for each row execute function public.set_updated_at();
 drop trigger if exists prohibited_categories_set_updated_at on public.prohibited_categories;
 create trigger prohibited_categories_set_updated_at before update on public.prohibited_categories
   for each row execute function public.set_updated_at();
@@ -619,9 +658,11 @@ create trigger prohibited_categories_set_updated_at before update on public.proh
 insert into public.platform_config (key, value, description) values
   ('commercial_open', 'false'::jsonb, 'Ouverture des transports réels. Exige des validations juridiques documentées.'),
   ('legal_validation_complete', 'false'::jsonb, 'Validations FR et SN du modèle économique et juridique enregistrées.'),
-  ('notifications_enabled', 'false'::jsonb, 'Au moins un canal externe officiel configuré et testé.'),
-  ('email_provider_configured', 'false'::jsonb, 'Prestataire e-mail choisi, contrat vérifié et secret serveur configuré.'),
-  ('whatsapp_provider_configured', 'false'::jsonb, 'WhatsApp Cloud API officielle autorisée et secret serveur configuré.'),
+  ('notifications_enabled', 'false'::jsonb, 'Valeur DÉRIVÉE : au moins un canal serveur opérationnel confirmé.'),
+  ('email_provider_configured', 'false'::jsonb, 'Valeur DÉRIVÉE : secrets serveur détectés, jamais une déclaration admin.'),
+  ('whatsapp_provider_configured', 'false'::jsonb, 'Valeur DÉRIVÉE : secrets serveur détectés, jamais une déclaration admin.'),
+  ('email_provider_state', '"non_configure"'::jsonb, 'État serveur : non configuré / configuré / testé / opérationnel / en erreur.'),
+  ('whatsapp_provider_state', '"non_configure"'::jsonb, 'État serveur : non configuré / configuré / testé / opérationnel / en erreur.'),
   ('pricing_config_validated', 'false'::jsonb, 'Tarifs et commissions validés commercialement. Aucun tarif n est inventé.'),
   ('delivery_code_ttl_hours', '48'::jsonb, 'Durée de validité d un code de remise.'),
   ('delivery_code_max_attempts', '5'::jsonb, 'Nombre maximal de tentatives de code.'),
@@ -629,6 +670,13 @@ insert into public.platform_config (key, value, description) values
   ('notification_max_attempts', '5'::jsonb, 'Nombre maximal de tentatives d envoi externe.'),
   ('notification_retry_minutes', '15'::jsonb, 'Délai de base entre deux tentatives.')
 on conflict (key) do nothing;
+
+-- Corrige les descriptions si une version antérieure de ces clés existait déjà,
+-- sans modifier les valeurs d'exploitation.
+update public.platform_config set description = 'Valeur DÉRIVÉE : au moins un canal serveur opérationnel confirmé.'
+  where key = 'notifications_enabled';
+update public.platform_config set description = 'Valeur DÉRIVÉE : secrets serveur détectés, jamais une déclaration admin.'
+  where key in ('email_provider_configured', 'whatsapp_provider_configured');
 
 insert into public.prohibited_categories (code, label, restriction, rationale) values
   ('narcotics', 'Stupéfiants et substances illégales', 'prohibited', 'Liste indicative, non validée juridiquement.'),

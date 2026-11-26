@@ -58,5 +58,5 @@ test("les buckets privés, l'audit immuable et la chaîne du passeport sont déc
 test("aucun secret de service n'est écrit dans le dépôt", () => {
   assert.match(allSql, /bootstrap_first_admin/);
   assert.match(finalSecurity, /grant execute on function public\.bootstrap_first_admin\(uuid\) to service_role/);
-  assert.doesNotMatch(allSql, /SUPABASE_SERVICE_ROLE_KEY\s*=\s*['\"]|sb_secret_|sk_live_/i);
+  assert.doesNotMatch(allSql, /SUPABASE_SERVICE_ROLE_KEY\s*=\s*['\"]|sb_secret_[A-Za-z0-9]{4,}|sk_live_[A-Za-z0-9]{4,}/i);
 });

@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test",
-    "test:sql": "node --test tests/sql-integration.test.mjs",
+    "test:sql": "node --test tests/sql-integration.test.mjs tests/reliability-audit.test.mjs",
     "test:frontend": "node --test tests/app.test.mjs tests/frontend-flows.test.mjs"
   },
   "devDependencies": {

@@ -110,8 +110,20 @@ async function setupPlatform() {
     p_channel: "email",
     p_configured: true,
     p_provider_name: "Provider local de test",
-    p_reason: "Configuration de test sans secret ni envoi réel",
+    p_reason: "Déclaration de test sans secret ni envoi réel",
   });
+  // Activation serveur locale : contrôle de présence des secrets, confirmation
+  // de test synthétique, puis activation explicite. Aucun prestataire réel.
+  await asService(db, () => callRpcNamed(db, "report_provider_secret_check", {
+    p_channel: "email", p_secrets_present: true, p_error_code: null,
+  }));
+  await asService(db, () => callRpcNamed(db, "record_provider_test_result", {
+    p_channel: "email", p_provider_message_id: "integration-provider-msg-0001",
+    p_http_status: 200, p_error_code: null,
+  }));
+  await asService(db, () => callRpcNamed(db, "mark_provider_operational", {
+    p_channel: "email", p_reason: "Activation locale de test après confirmation synthétique",
+  }));
   await adminCall(db, ids.admin, "admin_set_platform_flag", {
     p_key: "pricing_config_validated",
     p_value: true,

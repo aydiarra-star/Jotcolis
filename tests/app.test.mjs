@@ -16,6 +16,10 @@ const renderBlueprint = await read("../render.yaml");
 const ci = await read("../.github/workflows/ci.yml");
 const globeJs = await read("../journey-globe.js");
 const frontend = html + appJs + platformJs + config;
+const worker = await read("../supabase/functions/notification-worker/index.ts");
+const tablesSql = await read("../supabase/migrations/202611260002_platform_tables.sql");
+const rpcsSql = await read("../supabase/migrations/202611260003_platform_rpcs.sql");
+const adminSql = await read("../supabase/migrations/202611260004_platform_admin_security.sql");
 
 test("page française, accessible et identité visuelle préservée", () => {
   assert.match(html, /<html lang="fr">/);
@@ -120,4 +124,49 @@ test("aucune couleur hors palette ne subsiste dans les feuilles de style histori
     const outside = [...new Set(colors.filter((color) => !allowed.has(color.toLowerCase())))];
     assert.deepEqual(outside, [], `${name} contient des couleurs hors palette : ${outside.join(", ")}`);
   }
+});
+
+
+test("activation des notifications : séparation déclaration / secrets / test / opérationnel côté serveur", () => {
+  assert.doesNotMatch(platformJs, /select\("platform_config"\)/);
+  assert.doesNotMatch(platformJs, /<option value="notifications_enabled">/);
+  assert.match(platformJs, /Déclaration administrative active/);
+  assert.match(platformJs, /notification_provider_states/);
+  assert.match(platformJs, /aria-busy/);
+  assert.match(tablesSql, /create table if not exists public\.notification_provider_states/);
+  assert.match(tablesSql, /non_configure.*configure.*teste.*operationnel.*en_erreur/s);
+  assert.match(rpcsSql, /notification_channel_is_operational/);
+  assert.match(adminSql, /NOTIFICATION_ACTIVATION_SERVER_ONLY/);
+  assert.match(adminSql, /notification_provider_declared/);
+  assert.match(adminSql, /PROVIDER_CONFIRMATION_REQUIRED/);
+  assert.match(adminSql, /report_provider_secret_check/);
+  assert.match(adminSql, /record_provider_test_result/);
+  assert.match(adminSql, /mark_provider_operational/);
+  assert.doesNotMatch(adminSql, /grant select on public\.prohibited_categories, public\.platform_config/);
+  assert.match(adminSql, /grant select on public\.prohibited_categories to anon, authenticated/);
+});
+
+test("worker : aucun faux succès, aucun secret dans les journaux et aucun test automatique payant", () => {
+  assert.match(worker, /x-worker-action/);
+  assert.match(worker, /secret-check/);
+  assert.match(worker, /aucun appel prestataire/i);
+  assert.match(worker, /aucun test payant/i);
+  assert.match(worker, /action === "secret-check"/);
+  assert.match(worker, /PROVIDER_CONFIRMATION_MISSING/);
+  assert.match(worker, /DELIVERY_TIMEOUT_MANUAL_RECONCILIATION/);
+  assert.match(worker, /Idempotency-Key/);
+  assert.doesNotMatch(worker, /payload:\s*row\.payload/);
+  assert.doesNotMatch(worker, /console\.(log|error)\([^)]*Deno\.env/);
+  assert.doesNotMatch(worker, /console\.(log|error)\([^)]*recipient_contact/);
+  assert.doesNotMatch(worker, /sb_secret_|sk_live_/i);
+});
+
+test("CI, build et documentation FREE couvrent les suites et livrables de la phase 2", () => {
+  assert.match(ci, /npm ci/);
+  assert.match(ci, /npm test/);
+  assert.match(ci, /npm run test:sql/);
+  assert.match(ci, /npm run test:frontend/);
+  assert.match(ci, /npm run build/);
+  assert.match(buildScript, /docs\/AUDIT-PHASE-2\.md/);
+  assert.match(buildScript, /docs\/SUPABASE-FREE\.md/);
 });

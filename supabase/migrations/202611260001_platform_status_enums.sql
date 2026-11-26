@@ -2,6 +2,9 @@
 -- Aucune donnée existante n'est modifiée. Les nouvelles valeurs ne sont PAS utilisées
 -- dans cette migration : PostgreSQL interdit d'utiliser une valeur ajoutée dans la
 -- même transaction. Les fonctions qui les emploient sont dans les migrations suivantes.
+-- PostgreSQL 17/Supabase autorise ALTER TYPE ... ADD VALUE IF NOT EXISTS dans une transaction,
+-- mais une valeur ajoutée n'est utilisable qu'après COMMIT : cette migration doit donc rester
+-- la première du lot et être validée avant 002/003/004. Aucune valeur existante n'est retirée.
 begin;
 
 do $$
