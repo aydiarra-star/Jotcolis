@@ -1,5 +1,7 @@
 # JotColis — Architecture cible
 
+> **Note de chantier (2026-11-26)** : ce document décrit une cible ou un état historique. L'état vérifié du code, des migrations locales, des tests, des blocages et des services vivants non vérifiés fait autorité dans [AUDIT-ET-CHANTIER.md](AUDIT-ET-CHANTIER.md).
+
 ## Statut
 Architecture préliminaire. Aucune pile technique n’est définitive avant l’évaluation du dépôt, du budget, des compétences, des paiements et de l’hébergement.
 

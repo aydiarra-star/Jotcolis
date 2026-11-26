@@ -1,5 +1,7 @@
 # JotColis — Parcours utilisateurs et structure des écrans
 
+> **Note de chantier (2026-11-26)** : ce document décrit une cible ou un état historique. L'état vérifié du code, des migrations locales, des tests, des blocages et des services vivants non vérifiés fait autorité dans [AUDIT-ET-CHANTIER.md](AUDIT-ET-CHANTIER.md).
+
 ## 1. Navigation publique
 - Accueil
 - Comment ça marche

@@ -2,10 +2,16 @@
   "name": "jotcolis",
   "version": "0.1.0",
   "private": true,
-  "description": "JotColis — frontend prototype and deployable static preview",
+  "description": "JotColis — plateforme de mise en relation, frontend statique et migrations Supabase",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "test:sql": "node --test tests/sql-integration.test.mjs",
+    "test:frontend": "node --test tests/app.test.mjs tests/frontend-flows.test.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.6.0",
+    "jsdom": "26.1.0"
   },
   "engines": {
     "node": ">=20"

@@ -3,8 +3,7 @@ on:
   pull_request:
   push:
     branches:
-      - main
-      - feature/fondations-jotcolis
+      - "**"
 permissions:
   contents: read
 jobs:
@@ -17,7 +16,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Test
+          cache: npm
+      - name: Install test dependencies
+        run: npm ci
+      - name: Tests SQL, frontend and build
         run: npm test
       - name: Build static preview
         run: npm run build

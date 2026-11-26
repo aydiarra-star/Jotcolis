@@ -1,5 +1,7 @@
 # JotColis — Cahier des charges fonctionnel
 
+> **Note de chantier (2026-11-26)** : ce document décrit une cible ou un état historique. L'état vérifié du code, des migrations locales, des tests, des blocages et des services vivants non vérifiés fait autorité dans [AUDIT-ET-CHANTIER.md](AUDIT-ET-CHANTIER.md).
+
 Version de travail 1.0. Les questions juridiques, de transport, de douane et de paiement doivent être validées par des professionnels compétents avant lancement.
 
 ## 1. Vision

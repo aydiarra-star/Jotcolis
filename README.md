@@ -2,63 +2,55 @@
 
 **Votre colis voyage avec confiance.** *(signature de travail à valider)*
 
-JotColis est un projet de plateforme mobile-first mettant en relation expéditeurs, voyageurs transporteurs (GP) et destinataires. L’objectif est de faciliter la recherche de trajets, d’améliorer la traçabilité et d’organiser la gestion des incidents.
+JotColis est une plateforme mobile-first de mise en relation entre expéditeurs, voyageurs transporteurs (GP), destinataires et administrateurs. Ce dépôt officiel contient le frontend statique, les migrations Supabase et la documentation du chantier.
 
-> **État : prototype frontend et fondations de données en place.** La prévisualisation reste statique : recherche, trajets et passeport sont des démonstrations locales fictives. Un projet Supabase JotColis distinct a été créé et le schéma initial installé avec RLS activée, mais le frontend n’est pas encore connecté à l’authentification ni aux données réelles. Aucune réservation, géolocalisation ou transaction réelle n’est activée.
+> **État réel : `NON PRÊT` pour un lancement commercial.** Le frontend ne contient plus de trajets, confirmations, codes ou suivis de démonstration. Les nouveaux parcours sont contrôlés par Supabase Auth, RLS et des fonctions PostgreSQL. Les migrations de ce dépôt ont été exécutées et testées dans un PostgreSQL local PGlite, mais **elles n'ont pas été appliquées à la base Supabase distante** : l'accès propriétaire et la vérification des services vivants manquent. Aucun paiement, transport réel, réservation commerciale, envoi e-mail ou message WhatsApp n'est activé. Le rapport détaillé est [docs/AUDIT-ET-CHANTIER.md](docs/AUDIT-ET-CHANTIER.md).
 
-## Principes
-- Confiance vérifiable : identité, voyage et fiabilité sont des statuts distincts.
-- Suivi honnête : événements déclarés, estimations et GPS consenti ne sont jamais confondus.
-- Transparence : prix total, frais et conditions affichés avant confirmation.
-- Traçabilité : passeport de colis et historique horodaté.
-- Confidentialité : minimisation des données et permissions par rôle.
-- International progressif : chaque corridor est activé après validation.
-- Paiements et remboursements non simulés comme réels.
+## Ce qui est en place dans le code
 
-## MVP envisagé
-1. Comptes et rôles.
-2. Publication et recherche de trajets/capacités.
-3. Demandes de colis sans trajet correspondant.
-4. Réservation, acceptation/refus et contrôle de capacité.
-5. Prix transparent et prestataire de paiement adapté.
-6. Passeport du colis et preuves de prise en charge/remise.
-7. Notifications, annulations, incidents et réclamations.
-8. Console d’administration et journal d’audit.
-9. Règles de corridor et de catégories issues de sources vérifiées.
+- Authentification Supabase : inscription, connexion, déconnexion, confirmation, réinitialisation, session, profil complet et compte inactif.
+- Rôles serveur : `expéditeur`, `voyageur GP`, `destinataire`, `administrateur`, sans attribution d'administrateur par l'utilisateur.
+- Vérification GP avec sept statuts, contrôles distincts, documents privés, historique et décision administrateur motivée.
+- Trajets : brouillons, publication conditionnelle, recherche sur les offres réellement publiées, modification limitée et annulation contrôlée.
+- Demandes et réservations : déclaration du contenu, acceptation/refus, capacité atomique, idempotence et libération de capacité.
+- Passeport colis : référence générée serveur, événements chaînés et immuables, transitions déclarées, suivi public sans donnée personnelle.
+- Code de remise temporaire : génération imprévisible, hachage, expiration, tentatives, vérification serveur et procédure de secours administrateur auditée.
+- Notifications : table d'outbox, historique immuable, tentatives, statut bloqué explicite et worker Edge Function non déployé. Aucun envoi n'est prétendu réussi sans réponse d'un prestataire officiel.
+- Administration : utilisateurs, dossiers GP, corridors, trajets, réservations, incidents, validations juridiques, drapeaux d'exploitation et journal d'audit.
+- Blocage légal : validations documentées France/Sénégal, catégories de marchandises et corridors désactivés par défaut. Aucune conformité juridique réelle n'est inventée.
 
-## Prévisualisation en ligne
+## Prévisualisation et ressources officielles
 
-La prévisualisation interactive est déployée sur Render : [jotcolis-preview.onrender.com](https://jotcolis-preview.onrender.com). Elle est liée à la branche `feature/fondations-jotcolis`. Elle permet de filtrer des trajets fictifs et d’ajouter un trajet de démonstration stocké dans le navigateur local. Ces données ne sont pas partagées avec d’autres utilisateurs et ne constituent pas des disponibilités réelles. Il ne s’agit pas encore d’un service de livraison opérationnel.
+Le projet officiel est `aydiarra-star/Jotcolis`. Les ressources à utiliser sont :
 
-## Lancer la prévisualisation en local
+- Render : `https://jotcolis-main-preview.onrender.com/#accueil`, service `srv-dbhq75gn74is73eog6sg`.
+- Supabase : projet `rzezmtahqrxiivdjfajo`, URL `https://rzezmtahqrxiivdjfajo.supabase.co`, région Paris `eu-west-3`.
 
-Prérequis : Node.js 20 ou supérieur. Aucune dépendance npm externe n’est nécessaire.
+Ces services n'ont pas pu être vérifiés depuis ce chantier : aucun connecteur ni identifiant d'accès propriétaire n'était disponible et les endpoints étaient injoignables depuis le sandbox. `render.yaml` est un blueprint de dépôt, pas la preuve de la configuration du service officiel. Aucun déploiement, aucune migration distante et aucune modification Render/Supabase n'a été effectuée.
+
+## Développement local
+
+Prérequis : Node.js 20 ou supérieur.
 
 ```bash
+npm ci
 npm test
 npm run build
 ```
 
-Le site statique généré se trouve dans `dist/`. Un Blueprint Render est fourni dans `render.yaml` pour préparer un service de prévisualisation ; il doit encore être créé et validé dans le compte Render.
+`npm test` exécute 39 tests : assertions statiques, 12 scénarios d'intégration SQL dans PGlite et 8 scénarios navigateur jsdom avec un client Supabase simulé. Aucun test ne touche la base ou les utilisateurs réels. `npm run build` génère `dist/` avec le frontend, les styles, le globe, la couche plateforme et le rapport d'audit. `dist/` et `node_modules/` sont ignorés par Git.
+
+## Configuration et secrets
+
+`supabase-config.js` contient uniquement l'URL publique et la clé publishable du navigateur. Aucune clé `service_role`, aucun secret de prestataire et aucun token ne doivent être committés. Les noms de variables serveur attendus sont documentés dans `.env.example`. Le premier administrateur doit être créé par une opération privilégiée `bootstrap_first_admin`, jamais depuis le navigateur.
 
 ## Documentation
-- [Prompt maître](docs/PROMPT-MAITRE.md)
-- [Cahier des charges fonctionnel](docs/CAHIER-DES-CHARGES.md)
-- [Architecture cible](docs/ARCHITECTURE.md)
-- [Plan backend MVP et sécurité](docs/PLAN-BACKEND-MVP.md)
-- [Référence SQL du schéma initial Supabase](supabase/migrations/202610280001_initial_schema_draft.sql) — à rapprocher de l’historique distant avant de la considérer comme migration canonique.
-- [Feuille de route](docs/ROADMAP.md)
-- [Parcours UX](docs/UX-PARCOURS.md)
-- [Identité visuelle](docs/IDENTITE-VISUELLE.md)
-- [Prototype visuel (HTML)](prototype/index.html)
 
-## Lancement envisagé
-Le corridor France–Sénégal est un pilote possible, sous réserve des validations juridiques, douanières, transport, paiement et opérationnelles. La conception doit prévoir l’international sans laisser croire que tous les corridors sont ouverts.
+- [Audit, chantier et état réel](docs/AUDIT-ET-CHANTIER.md) — document de référence.
+- [Prompt maître](docs/PROMPT-MAITRE.md), [cahier des charges](docs/CAHIER-DES-CHARGES.md), [architecture cible](docs/ARCHITECTURE.md), [plan backend et sécurité](docs/PLAN-BACKEND-MVP.md), [feuille de route](docs/ROADMAP.md), [parcours UX](docs/UX-PARCOURS.md), [identité visuelle](docs/IDENTITE-VISUELLE.md) — documents historiques de conception, à relire au regard de l'audit.
+- [Migrations SQL](supabase/migrations/) — six migrations historiques conservées, quatre migrations additives du chantier. À rapprocher de l'historique Supabase distant avant toute application.
+- [Prototype visuel historique](prototype/index.html).
 
 ## Contribution
-Travailler dans une branche dédiée, ouvrir une pull request, préserver le travail existant, ajouter les tests pertinents et documenter les risques. Ne jamais commiter de secrets ou de données personnelles réelles.
 
-
-## Authentification du prototype
-
-Le formulaire d’inscription et de connexion utilise Supabase Auth via une clé publishable destinée au navigateur. Les profils sont créés par le déclencheur de base de données existant. Aucun secret service-role n’est embarqué dans le frontend. La recherche interroge désormais Supabase et ne montre que les trajets futurs publiés sur des corridors actifs ; si aucun trajet réel n’existe ou si le service échoue, les exemples fictifs ne sont pas présentés comme des offres. Les corridors sont actuellement désactivés et la recherche peut donc légitimement retourner zéro résultat. La publication GP et les réservations restent désactivées jusqu’à l’ajout des validations et flux serveur sécurisés.
+Travailler dans une branche dédiée, préserver le travail et les données existants, ajouter des tests fonctionnels et documenter les risques. Ne jamais commiter de secrets ou de données personnelles réelles. Ne pas fusionner ni déployer en production sans validation explicite du propriétaire et sans les vérifications de préproduction listées dans le rapport d'audit.

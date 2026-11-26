@@ -1,5 +1,7 @@
 # JotColis — Feuille de route et critères de réception
 
+> **Note de chantier (2026-11-26)** : ce document décrit une cible ou un état historique. L'état vérifié du code, des migrations locales, des tests, des blocages et des services vivants non vérifiés fait autorité dans [AUDIT-ET-CHANTIER.md](AUDIT-ET-CHANTIER.md).
+
 ## Phase 0 — Fondations du dépôt
 - [x] Documenter la vision et le prompt maître.
 - [x] Rédiger le cahier des charges fonctionnel préliminaire.
