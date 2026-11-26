@@ -1,5 +1,7 @@
 # JotColis — Plan d’implémentation du backend MVP
 
+> **Note de chantier (2026-11-26)** : ce document décrit une cible ou un état historique. L'état vérifié du code, des migrations locales, des tests, des blocages et des services vivants non vérifiés fait autorité dans [AUDIT-ET-CHANTIER.md](AUDIT-ET-CHANTIER.md).
+
 Statut au 29 octobre 2026 : projet Supabase JotColis distinct créé et schéma métier de base installé. Le frontend statique est désormais connecté à Supabase Auth pour l’inscription, la connexion et la déconnexion, avec une clé publishable côté navigateur. Les flux de données métier, la publication de trajets, les réservations, les livraisons et les transactions réelles ne sont pas encore activés.
 
 ## Décision de séparation des environnements

@@ -3,8 +3,7 @@ on:
   pull_request:
   push:
     branches:
-      - main
-      - feature/fondations-jotcolis
+      - "**"
 permissions:
   contents: read
 jobs:
@@ -12,12 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
-      - name: Test
+          node-version: 22
+          cache: npm
+      - name: Install test dependencies
+        run: npm ci
+      - name: Tests complets
         run: npm test
+      - name: Tests SQL ciblés
+        run: npm run test:sql
+      - name: Tests frontend ciblés
+        run: npm run test:frontend
+      - name: Tests worker Deno (sans réseau)
+        run: npm run test:worker
       - name: Build static preview
         run: npm run build

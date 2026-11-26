@@ -3,15 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="JotColis met en relation des expéditeurs à l’étranger avec des GP vérifiés qui transportent des colis vers le Sénégal.">
-  <title>JotColis — Envoyez vos colis Paris → Dakar avec un voyageur vérifié</title>
+  <meta name="description" content="JotColis : mise en relation encadrée entre expéditeurs et voyageurs, avec comptes, trajets publiés, demandes, réservations et passeport colis enregistrés côté serveur.">
+  <title>JotColis — Envoyez vos colis Paris → Dakar avec un voyageur GP</title>
   <meta name="theme-color" content="#f47721">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./premium.css">
   <link rel="stylesheet" href="./experience.css">
+  <link rel="stylesheet" href="./platform.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.min.js" defer></script>
   <script src="./supabase-config.js" defer></script>
-  <script src="./app.js?v=mise-en-relation-20261126" defer></script>
+  <script src="./app.js?v=plateforme-20261126" defer></script>
+  <script src="./platform.js?v=plateforme-20261126" defer></script>
   <script src="./journey-globe.js" defer></script>
 </head>
 <body>
@@ -115,8 +117,8 @@
         <div class="hero-atmosphere" aria-hidden="true"></div>
         <div class="hero-copy">
           <p class="eyebrow"><span class="eyebrow-dot"></span> Mise en relation · France ↔ Sénégal</p>
-          <h1>Envoyez vos colis <span>Paris → Dakar</span> avec un voyageur vérifié</h1>
-          <p class="hero-description">Trouvez un GP qui part déjà, contactez-le et suivez la remise de votre colis.</p>
+          <h1>Envoyez vos colis <span>Paris → Dakar</span> avec un voyageur GP</h1>
+          <p class="hero-description">Recherchez un trajet publié, déposez une demande enregistrée et suivez les étapes réellement déclarées.</p>
         </div>
 
         <div class="search-card" aria-labelledby="search-title">
@@ -126,7 +128,7 @@
             </div>
             <span class="card-icon" aria-hidden="true"><svg><use href="#jc-icon-route"></use></svg></span>
           </div>
-          <form id="search-form">
+          <form id="search-form" data-form="search-trips">
             <label for="origin">Départ</label>
             <div class="input-wrap"><span class="field-icon" aria-hidden="true"><svg><use href="#jc-icon-pin"></use></svg></span><input id="origin" name="origin" placeholder="Ex. Paris" aria-label="Ville de départ" autocomplete="address-level2" required></div>
             <div class="direction-switch-row">
@@ -144,7 +146,7 @@
                   <button class="field-icon date-picker-trigger" type="button" data-date-target="travel-date" aria-label="Ouvrir le calendrier">
                     <svg aria-hidden="true"><use href="#jc-icon-calendar"></use></svg>
                   </button>
-                  <input id="travel-date" name="date" type="date" placeholder="jj/mm/aaaa" aria-label="Date souhaitée (jj/mm/aaaa)">
+                  <input id="travel-date" name="travel-date" type="date" placeholder="jj/mm/aaaa" aria-label="Date souhaitée (jj/mm/aaaa)">
                   <span class="date-placeholder" aria-hidden="true">jj/mm/aaaa</span>
                 </div>
               </div>
@@ -163,7 +165,7 @@
               <button class="button button-primary button-full" type="submit">Rechercher un trajet <span aria-hidden="true">→</span></button>
               <a class="button button-secondary button-full hero-gp-btn" href="#publier">Je voyage, je publie mon trajet</a>
             </div>
-            <p class="form-note">Vous voyez le prix au kilo avant de contacter le GP directement.</p>
+            <p class="form-note">Seuls les trajets publiés, approuvés et disposant de capacité sont retournés par le serveur.</p>
             <div id="search-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
           </form>
         </div>
@@ -173,22 +175,22 @@
         <div class="trust-item">
           <span class="trust-icon" aria-hidden="true"><svg><use href="#jc-icon-shield"></use></svg></span>
           <div>
-            <strong>GP vérifiés</strong>
-            <p>Pièce d’identité et téléphone contrôlés.</p>
+            <strong>Contrôle administrateur</strong>
+            <p>Un dossier GP n’est approuvé que sur décision enregistrée.</p>
           </div>
         </div>
         <div class="trust-item">
           <span class="trust-icon" aria-hidden="true"><svg><use href="#jc-icon-tag"></use></svg></span>
           <div>
-            <strong>Prix au kilo affiché</strong>
-            <p>Vous voyez le tarif avant de contacter le GP.</p>
+            <strong>Tarif renseigné</strong>
+            <p>Prix au kilo saisi par le voyageur, sans paiement intégré.</p>
           </div>
         </div>
         <div class="trust-item">
           <span class="trust-icon" aria-hidden="true"><svg><use href="#jc-icon-code"></use></svg></span>
           <div>
-            <strong>Code de remise</strong>
-            <p>Le destinataire reçoit un code à présenter à la livraison.</p>
+            <strong>Code serveur temporaire</strong>
+            <p>Généré et vérifié côté serveur, jamais stocké en clair.</p>
           </div>
         </div>
       </section>
@@ -199,12 +201,9 @@
             <p class="eyebrow">Trajets disponibles</p>
             <h2 id="results-title">Trajets vers le Sénégal</h2>
           </div>
-          <div class="demo-banner" id="demo-banner" role="note">
-            <span class="demo-banner-mark" aria-hidden="true"></span>
-            <span>Données de démonstration</span>
-          </div>
+          <div class="status-pill" id="results-source" role="note">Source : Supabase</div>
         </div>
-        <p class="results-disclaimer" id="results-disclaimer">Exemples affichés dans ce navigateur tant qu’aucun trajet réel n’est publié.</p>
+        <p class="results-disclaimer" id="results-disclaimer">Lancez une recherche. Aucun trajet fictif ni donnée locale n’est présenté comme une offre réelle.</p>
         <div id="trip-results" class="trip-results" aria-live="polite"></div>
       </section>
 
@@ -213,7 +212,7 @@
           <div class="globe-section-copy">
             <p class="eyebrow">Liaison Paris ↔ Dakar</p>
             <h2 id="liaison-title">Des voyageurs déjà en route vers le Sénégal</h2>
-            <p>Consultez les prochains départs, comparez le prix au kilo et demandez une place directement au GP.</p>
+            <p>Consultez les prochains départs publiés, comparez le prix au kilo et déposez une demande enregistrée.</p>
             <a class="text-link" href="#search-form">Lancer une recherche <span aria-hidden="true">↑</span></a>
           </div>
           <div class="globe-stage globe-stage-compact" role="group" aria-label="Globe 3D interactif illustrant la liaison Dakar–Paris">
@@ -260,12 +259,12 @@
         <div class="section-intro">
           <p class="eyebrow">Comment ça marche</p>
           <h2>Simple, direct et rassurant.</h2>
-          <p>En trois étapes, vous trouvez un voyageur, vous organisez le dépôt et vous suivez la remise.</p>
+          <p>En trois étapes : recherche en base, demande et réservation contrôlée, puis événements réels du passeport colis.</p>
         </div>
         <div class="steps">
           <article class="step-card"><span class="step-number">01</span><div class="step-illustration illustration-search" aria-hidden="true"><svg><use href="#jc-icon-search"></use></svg></div><h3>Trouvez un GP</h3><p>Comparez les dates de départ et le prix au kilo affiché pour chaque trajet.</p></article>
-          <article class="step-card"><span class="step-number">02</span><div class="step-illustration illustration-hand" aria-hidden="true"><svg><use href="#jc-icon-handshake"></use></svg></div><h3>Contactez le GP</h3><p>Demandez une place, confirmez que votre colis est autorisé et convenez du dépôt avec le GP.</p></article>
-          <article class="step-card"><span class="step-number">03</span><div class="step-illustration illustration-check" aria-hidden="true"><svg><use href="#jc-icon-code"></use></svg></div><h3>Suivez la remise</h3><p>À l’arrivée, le destinataire présente son code de remise au GP pour récupérer le colis.</p></article>
+          <article class="step-card"><span class="step-number">02</span><div class="step-illustration illustration-hand" aria-hidden="true"><svg><use href="#jc-icon-handshake"></use></svg></div><h3>Déposez une demande</h3><p>Déclarez le contenu et le poids. Le voyageur accepte ou refuse ; la capacité est réservée côté serveur.</p></article>
+          <article class="step-card"><span class="step-number">03</span><div class="step-illustration illustration-check" aria-hidden="true"><svg><use href="#jc-icon-code"></use></svg></div><h3>Suivez les étapes réelles</h3><p>Chaque étape déclarée est horodatée par le serveur. La remise exige un code vérifié, jamais une simple déclaration.</p></article>
         </div>
       </section>
 
@@ -273,24 +272,19 @@
         <div class="passport-copy">
           <p class="eyebrow">Suivi du colis</p>
           <h2>Chaque étape est claire.<br><span>Jusqu’au code de remise.</span></h2>
-          <p>Le suivi rassemble chaque étape déclarée par le GP, de la prise en charge jusqu’à la livraison au destinataire.</p>
+          <p>Consultez le passeport d’un colis avec sa référence. Seuls les événements réellement enregistrés et publics sont affichés.</p>
           <a class="text-link" href="#search-form">Trouver un trajet <span aria-hidden="true">→</span></a>
         </div>
-        <div class="timeline-card" aria-label="Exemple de suivi de colis">
-          <div class="timeline-top"><div><span class="small-label">FICHE COLIS</span><strong>JC-EXEMPLE-2048</strong></div><span class="status-pill">Exemple</span></div>
-          <div class="route-line"><span class="route-point"></span><div><span class="small-label">DÉPART</span><strong>Paris, France</strong></div><span class="route-dash flight-track" aria-label="Liaison aérienne Paris–Dakar"><svg class="route-plane" viewBox="0 0 48 48" role="img" aria-label="Avion en vol"><use href="#jc-icon-plane"></use></svg></span><span class="route-point route-point-end"></span><div><span class="small-label">DESTINATION</span><strong>Dakar, Sénégal</strong></div></div>
-          <div class="handover-code-preview">
-            <span class="handover-code-label">Code de remise destinataire (exemple)</span>
-            <strong class="handover-code-value">JC-4829</strong>
-          </div>
-          <div class="timeline">
-            <div class="timeline-event complete"><span class="timeline-marker">✓</span><div><strong>Demande envoyée au GP</strong><p>Place confirmée avec le voyageur · 09:10</p></div><span class="event-tag">Confirmé</span></div>
-            <div class="timeline-event complete"><span class="timeline-marker">✓</span><div><strong>Colis vérifié et remis au GP</strong><p>Contenu contrôlé au dépôt · 11:45</p></div><span class="event-tag">Pris en charge</span></div>
-            <div class="timeline-event current"><span class="timeline-marker">3</span><div><strong>En voyage vers Dakar</strong><p>Étape mise à jour par le GP à l’arrivée.</p></div><span class="event-tag">En cours</span></div>
-            <div class="timeline-event"><span class="timeline-marker">4</span><div><strong>Remise au destinataire</strong><p>Le destinataire présente le code de remise au GP.</p></div></div>
-          </div>
-          <p class="demo-note">Exemple illustratif. Aucun suivi GPS n’est affiché sans accord.</p>
-          <p class="card-disclaimer">JotColis met en relation clients et GP. Le GP vérifie le contenu du colis et en est responsable pendant le transport.</p>
+        <div class="timeline-card platform-tracking-card" aria-label="Consulter le passeport d’un colis">
+          <div class="timeline-top"><div><span class="small-label">PASSEPORT COLIS</span><strong>Référence serveur</strong></div><span class="status-pill">Données réelles</span></div>
+          <form id="parcel-track-form" data-form="track-parcel" class="platform-form">
+            <label for="parcel_code">Référence du colis</label>
+            <input id="parcel_code" name="parcel_code" type="text" minlength="8" maxlength="60" placeholder="JC-2026-…" autocomplete="off" required>
+            <button class="button button-primary button-full" type="submit">Consulter les événements publics</button>
+            <p class="feedback" id="parcel-track-feedback" role="status" aria-live="polite" hidden></p>
+          </form>
+          <div class="timeline platform-public-timeline" id="parcel-track-results" aria-live="polite"></div>
+          <p class="card-disclaimer">Aucun suivi GPS. Aucun événement illustratif. La remise au destinataire n’est confirmée qu’après vérification serveur du code temporaire.</p>
         </div>
       </section>
 
@@ -299,8 +293,8 @@
           <div class="gp-copy">
             <p class="eyebrow">Espace GP · Voyageurs</p>
             <h2>Je voyage, je publie mon trajet</h2>
-            <p>Vous partez bientôt vers le Sénégal avec des kilos disponibles ? Indiquez votre date, votre capacité et votre prix au kilo pour recevoir des demandes.</p>
-            <form id="trip-form" class="trip-form">
+            <p>Vous partez bientôt vers le Sénégal avec des kilos disponibles ? Enregistrez un brouillon en base. La publication exige un dossier GP approuvé et une liaison validée.</p>
+            <form id="trip-form" class="trip-form" data-form="create-trip">
               <p class="form-kicker">Proposer un trajet</p>
               <div class="trip-form-grid">
                 <div class="trip-form-wide"><label for="trip-corridor">Liaison</label><select id="trip-corridor" name="trip-corridor" required><option value="">Connectez-vous pour charger les liaisons</option></select></div>
@@ -317,10 +311,11 @@
                   </div>
                 </div>
                 <div><label for="trip-capacity">Capacité (kg)</label><input id="trip-capacity" name="trip-capacity" type="number" min="1" max="500" step="0.5" value="5" required></div>
-                <div><label for="trip-price">Prix par kg (facultatif)</label><input id="trip-price" name="trip-price" type="number" min="0" step="0.01" placeholder="Ex. 10"></div>
+                <div><label for="trip-price">Prix par kg (requis pour recevoir une demande)</label><input id="trip-price" name="trip-price" type="number" min="0" step="0.01" placeholder="Ex. 10" required></div>
                 <div><label for="trip-currency">Devise</label><select id="trip-currency" name="trip-currency"><option value="EUR">EUR · Euro</option><option value="XOF">XOF · Franc CFA</option><option value="USD">USD · Dollar US</option><option value="AED">AED · Dirham</option></select></div>
                 <div class="trip-form-wide"><label for="trip-conditions">Conditions (facultatif)</label><input id="trip-conditions" name="trip-conditions" maxlength="2000" placeholder="Ex. lieu de dépôt, objets refusés…"></div>
               </div>
+              <label class="platform-check"><input id="publish-now" name="publish-now" type="checkbox"> Publier immédiatement si toutes les conditions serveur sont réunies</label>
               <button class="button button-primary" type="submit">Enregistrer mon trajet <span aria-hidden="true">→</span></button>
               <p id="trip-feedback" class="trip-feedback" role="status" aria-live="polite">Connectez-vous dans votre <a href="#compte" class="inline-profile-link">profil</a> pour enregistrer votre trajet.</p>
             </form>
@@ -332,7 +327,7 @@
       <section class="closing-cta">
         <p class="eyebrow">JotColis · Mise en relation simple</p>
         <h2>Prêt à envoyer votre colis ?</h2>
-        <p>Trouvez un voyageur sur votre trajet, vérifiez le tarif au kilo et contactez-le directement.</p>
+        <p>Recherchez une offre publiée, vérifiez le tarif au kilo et déposez une demande enregistrée côté serveur.</p>
         <a class="button button-primary" href="#search-form">Rechercher un trajet <span aria-hidden="true">→</span></a>
       </section>
     </div>
@@ -348,27 +343,60 @@
           <p>Connectez-vous pour contacter un GP, enregistrer vos trajets ou suivre vos colis.</p>
         </div>
       </div>
+      <div class="platform-alert platform-alert-blocked" id="compliance-banner" role="status">Vérification de l’état du service…</div>
       <div class="account-status" id="auth-status" role="status" aria-live="polite">Vérification de votre session…</div>
       <div class="auth-grid">
-        <form class="auth-card" id="signup-form">
+        <form class="auth-card" id="signup-form" data-form="signup">
           <h3>Créer un compte</h3>
           <label for="signup-name">Nom affiché</label><input id="signup-name" name="display_name" autocomplete="name" maxlength="80" required>
           <label for="signup-email">Adresse e-mail</label><input id="signup-email" name="email" type="email" autocomplete="email" required>
           <label for="signup-password">Mot de passe</label><input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
           <button class="button button-primary button-full" type="submit">Créer mon compte</button>
         </form>
-        <form class="auth-card" id="signin-form">
+        <form class="auth-card" id="signin-form" data-form="signin">
           <h3>J’ai déjà un compte</h3>
           <label for="signin-email">Adresse e-mail</label><input id="signin-email" name="email" type="email" autocomplete="email" required>
           <label for="signin-password">Mot de passe</label><input id="signin-password" name="password" type="password" autocomplete="current-password" required>
           <button class="button button-primary button-full" type="submit">Me connecter</button>
+          <button class="button button-link" type="button" data-action="forgot-password">Mot de passe oublié ?</button>
         </form>
       </div>
+      <form class="auth-card platform-recovery" id="forgot-password-form" data-form="forgot-password" hidden>
+        <h3>Réinitialiser mon mot de passe</h3>
+        <label for="recovery-email">Adresse e-mail</label><input id="recovery-email" name="email" type="email" autocomplete="email" required>
+        <button class="button button-primary button-full" type="submit">Demander un lien Supabase Auth</button>
+        <p class="platform-small">La demande est transmise à Supabase Auth. Aucun envoi d’e-mail n’est confirmé par cette page.</p>
+      </form>
+      <form class="auth-card platform-recovery" id="reset-password-form" data-form="reset-password" hidden>
+        <h3>Définir un nouveau mot de passe</h3>
+        <label for="new-password">Nouveau mot de passe</label><input id="new-password" name="new_password" type="password" autocomplete="new-password" minlength="8" required>
+        <button class="button button-primary button-full" type="submit">Mettre à jour le mot de passe</button>
+      </form>
       <div class="account-session" id="account-session" hidden>
         <span id="account-email"></span>
-        <button class="button button-secondary" id="signout-button" type="button">Me déconnecter</button>
+        <span class="platform-badge" id="email-verification-badge" hidden></span>
+        <button class="button button-secondary" type="button" data-action="resend-verification" id="resend-verification-button" hidden>Renvoyer la confirmation</button>
+        <button class="button button-secondary" type="button" data-action="signout" id="signout-button">Me déconnecter</button>
       </div>
-      <p class="account-note">JotColis met en relation clients et GP. Après connexion, vous pouvez préparer un trajet ou demander une place directement auprès d’un voyageur.</p>
+      <section class="platform-profile-panel" id="profile-panel" hidden aria-labelledby="profile-form-title">
+        <h3 id="profile-form-title">Compléter mon profil</h3>
+        <p id="profile-roles" class="platform-small"></p>
+        <p id="profile-completion" class="platform-small"></p>
+        <form class="platform-form" id="profile-form" data-form="profile">
+          <div class="platform-form-grid">
+            <div class="platform-field"><label for="profile-display-name">Nom affiché</label><input id="profile-display-name" name="display_name" maxlength="80" autocomplete="name" required></div>
+            <div class="platform-field"><label for="profile-phone">Téléphone</label><input id="profile-phone" name="phone" type="tel" autocomplete="tel" required></div>
+            <div class="platform-field"><label for="profile-country">Pays (code ISO)</label><input id="profile-country" name="country_code" maxlength="2" placeholder="FR" autocomplete="country"></div>
+          </div>
+          <label class="platform-check"><input id="profile-terms" name="terms" type="checkbox" required> J’accepte les conditions d’utilisation.</label>
+          <label class="platform-check"><input id="profile-privacy" name="privacy" type="checkbox" required> J’accepte la politique de confidentialité et le traitement de mes données.</label>
+          <button class="button button-primary" type="submit">Enregistrer mon profil</button>
+        </form>
+      </section>
+      <div class="platform-dashboard" id="dashboard-shell" hidden>
+        <div id="dashboard-root" aria-live="polite"></div>
+      </div>
+      <p class="account-note">Compte, rôles, trajets, demandes, réservations et événements sont contrôlés par Supabase Auth, RLS et des fonctions PostgreSQL. Aucun statut sensible n’est modifiable depuis le navigateur.</p>
     </section>
   </main>
 
@@ -379,27 +407,28 @@
           <p class="eyebrow">Mise en relation</p>
           <h2 id="contact-gp-title">Contacter le GP</h2>
         </div>
-        <button class="modal-close-btn" id="contact-gp-close" type="button" aria-label="Fermer la fenêtre">✕</button>
+        <button class="modal-close-btn" id="contact-gp-close" type="button" data-modal-close aria-label="Fermer la fenêtre">✕</button>
       </div>
       <div class="modal-trip-summary" id="contact-trip-summary"></div>
-      <form id="contact-gp-form">
-        <label for="contact-sender">Votre WhatsApp ou e-mail</label>
-        <input id="contact-sender" name="sender_contact" type="text" placeholder="Ex. +33 6 12 34 56 78 ou nom@email.com" required>
-        <label for="contact-weight">Poids estimé du colis (kg)</label>
-        <input id="contact-weight" name="parcel_weight" type="number" min="0.5" max="100" step="0.5" placeholder="Ex. 3">
-        <label for="contact-message">Message au GP (facultatif)</label>
-        <textarea id="contact-message" name="message" rows="3" maxlength="500" placeholder="Ex. vêtements, dépôt possible à Paris…"></textarea>
-        <div class="prohibited-confirm-box">
-          <label class="prohibited-check" for="prohibited-items-confirm">
-            <input id="prohibited-items-confirm" name="prohibited_confirm" type="checkbox" required>
-            <span>Je confirme que mon colis ne contient aucun objet interdit ou illégal. <a href="#objets-interdits" class="prohibited-link" data-open-prohibited>Voir la liste des objets interdits</a></span>
-          </label>
-          <p class="prohibited-hint" id="prohibited-hint">Cochez cette case pour pouvoir contacter le GP.</p>
+      <form id="contact-gp-form" data-form="submit-request">
+        <div class="platform-form-grid">
+          <div class="platform-field"><label for="contact-description">Description du colis</label><input id="contact-description" name="description" maxlength="500" placeholder="Vêtements, livres…" required></div>
+          <div class="platform-field"><label for="contact-declared-content">Contenu déclaré</label><input id="contact-declared-content" name="declared_content" minlength="3" maxlength="500" placeholder="Vêtements et livres neufs" required></div>
+          <div class="platform-field"><label for="contact-weight">Poids (kg)</label><input id="contact-weight" name="weight" type="number" min="0.5" max="100" step="0.5" placeholder="Ex. 3" required></div>
+          <div class="platform-field"><label for="contact-sender">Votre contact</label><input id="contact-sender" name="sender_contact" type="text" placeholder="+33 … ou nom@email.com" required></div>
+          <div class="platform-field"><label for="contact-recipient-name">Nom du destinataire</label><input id="contact-recipient-name" name="recipient_name" maxlength="120" required></div>
+          <div class="platform-field"><label for="contact-recipient">Contact du destinataire</label><input id="contact-recipient" name="recipient_contact" type="text" placeholder="+221 … ou nom@email.com" required></div>
+          <div class="platform-field"><label for="contact-length">Longueur (cm, facultatif)</label><input id="contact-length" name="length" type="number" min="1" step="0.1"></div>
+          <div class="platform-field"><label for="contact-width">Largeur (cm, facultatif)</label><input id="contact-width" name="width" type="number" min="1" step="0.1"></div>
+          <div class="platform-field"><label for="contact-height">Hauteur (cm, facultatif)</label><input id="contact-height" name="height" type="number" min="1" step="0.1"></div>
         </div>
+        <label class="platform-check" for="contact-terms"><input id="contact-terms" name="terms" type="checkbox" required> J’accepte les conditions et je certifie être autorisé à confier ce colis.</label>
+        <label class="prohibited-check" for="prohibited-items-confirm"><input id="prohibited-items-confirm" name="prohibited" type="checkbox" required> <span>Je confirme que le colis ne contient aucun objet interdit, restreint ou soumis à déclaration non vérifiée. <a href="#objets-interdits" class="prohibited-link" data-open-prohibited>Voir la liste indicative</a></span></label>
+        <label for="contact-message">Message au voyageur (facultatif)</label><textarea id="contact-message" name="message" rows="2" maxlength="1000"></textarea>
         <div id="contact-gp-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
-        <button class="button button-primary button-full" id="contact-gp-submit" type="submit" disabled>Demander une place</button>
+        <button class="button button-primary button-full" id="contact-gp-submit" type="submit">Enregistrer ma demande</button>
       </form>
-      <p class="card-disclaimer">JotColis met en relation clients et GP. Le GP vérifie le contenu du colis et en est responsable pendant le transport.</p>
+      <p class="card-disclaimer">La demande est enregistrée en base et reste « en attente du voyageur ». Elle ne réserve aucune capacité et ne confirme aucun transport.</p>
     </div>
   </div>
 
@@ -410,7 +439,7 @@
           <p class="eyebrow">Sécurité du transport</p>
           <h2 id="prohibited-items-title">Liste des objets interdits</h2>
         </div>
-        <button class="modal-close-btn" id="prohibited-items-close" type="button" aria-label="Fermer la liste des objets interdits">✕</button>
+        <button class="modal-close-btn" id="prohibited-items-close" type="button" data-modal-close aria-label="Fermer la liste des objets interdits">✕</button>
       </div>
       <p class="modal-intro">Pour la sécurité du voyageur et le respect des douanes, il est strictement interdit d’envoyer :</p>
       <ul class="prohibited-list">
@@ -421,8 +450,8 @@
         <li>Articles contrefaits ou produits interdits à l’importation au Sénégal.</li>
         <li>Médicaments sans ordonnance et denrées périssables non autorisées.</li>
       </ul>
-      <p class="card-disclaimer">Liste indicative. Avant le départ, le GP vérifie le contenu du colis et peut refuser tout objet interdit ou douteux.</p>
-      <button class="button button-primary button-full" id="prohibited-items-ok" type="button">J’ai compris</button>
+      <p class="card-disclaimer">Liste indicative, non validée juridiquement. Le voyageur contrôle lui-même le contenu et peut refuser tout colis interdit ou douteux. Les règles douanières, aériennes et d’assurance doivent être validées par un professionnel avant tout transport réel.</p>
+      <button class="button button-primary button-full" id="prohibited-items-ok" type="button" data-modal-close>J’ai compris</button>
     </div>
   </div>
 
@@ -435,10 +464,10 @@
   </nav>
   <footer class="site-footer">
     <a class="brand brand-footer" href="#accueil"><span class="brand-mark">J</span><span>JotColis</span></a>
-    <p>Plateforme de mise en relation clients et GP vers le Sénégal.</p>
+    <p>Mise en relation encadrée, parcours enregistrés côté serveur. Ouverture commerciale soumise à validations documentées.</p>
     <div class="footer-links">
       <a href="#objets-interdits" data-open-prohibited>Objets interdits</a>
-      <a href="./README.md">Documentation</a>
+      <a href="./docs/AUDIT-ET-CHANTIER.md">État du chantier</a>
     </div>
   </footer>
 </body>

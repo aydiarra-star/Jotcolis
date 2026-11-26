@@ -2,10 +2,18 @@
   "name": "jotcolis",
   "version": "0.1.0",
   "private": true,
-  "description": "JotColis — frontend prototype and deployable static preview",
+  "description": "JotColis — plateforme de mise en relation, frontend statique et migrations Supabase",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "test:sql": "node --test tests/sql-integration.test.mjs tests/reliability-audit.test.mjs tests/migration-compat.test.mjs",
+    "test:frontend": "node --test tests/app.test.mjs tests/frontend-flows.test.mjs",
+    "test:worker": "deno check --no-remote supabase/functions/notification-worker/index.ts supabase/functions/notification-worker/deno-scenarios.ts && deno lint supabase/functions/notification-worker/index.ts supabase/functions/notification-worker/deno-scenarios.ts && deno test --no-remote --allow-read --allow-env supabase/functions/notification-worker/deno-scenarios.ts"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.6.0",
+    "deno": "2.9.6",
+    "jsdom": "26.1.0"
   },
   "engines": {
     "node": ">=20"
