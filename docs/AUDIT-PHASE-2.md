@@ -115,8 +115,11 @@ Le workflow `.github/workflows/ci.yml` déclenche désormais, sur `pull_request`
 
 Vérification **avant corrections** : le dernier commit connu `1b944d5a0edca71f6b751553b3f41c98b0533a9c` a un run GitHub Actions `45844240959` `success` et un check-run `test-and-build` `success` ; toutes les étapes étaient réussies. Cette preuve ne vaut pas pour les corrections Phase 2.
 
-Vérification **après corrections** : en attente du push du commit final et de la requête `gh` correspondante. Aucun succès CI post-correction n'est affirmé tant que le run du nouveau SHA n'a pas été récupéré.
+Vérification **après corrections** via `gh run watch`, `gh run list`, `gh api .../check-runs` et `gh api .../actions/jobs/...` : le commit de corrections `1d592ee6a0b7df04b5cb307f432743fc2c88a112` (« Harden provider activation, notification claims and Phase 2 audit ») a le run push `45863540176` `success`, URL `https://github.com/aydiarra-star/Jotcolis/actions/runs/45863540176`, créé le 2026-11-26T16:57:55Z et terminé le 2026-11-26T16:58:26Z. Le check-run `140060443887` (`test-and-build`) est `success` et le job `140060443887` est `success`. Les 11 étapes observées sont toutes `success` : Set up job, Checkout, Set up Node.js, Install test dependencies, Tests complets, Tests SQL ciblés, Tests frontend ciblés, Build static preview, Post Set up Node.js, Post Checkout, Complete job.
 
+Le runner a émis une annotation non bloquante : les actions `actions/checkout@v4` et `actions/setup-node@v4` ciblent Node.js 20, déprécié, et ont été forcées sur Node.js 24. Le job reste `success`. Aucun PR check-run n'a été observé ; cette vérification concerne les événements `push` de la branche Arena.
+
+Le présent rapport est ensuite mis à jour par un commit de documentation distinct, dont le propre run GitHub Actions est vérifié séparément après push ; ce résultat est consigné dans la réponse finale de mission. Aucun succès CI n'est attribué à un SHA non interrogé.
 
 ---
 
