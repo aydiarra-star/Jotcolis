@@ -57,7 +57,7 @@ La porte commerciale exige des références documentées pour les deux juridicti
 
 ## 10. Changements GitHub, Supabase et Render
 
-GitHub : modifications sur `arena/b65591cf-jotcolis` uniquement, poussées dans le commit `837eebc` ; CI étendue à toutes les branches avec `npm ci`, tests et build. Supabase : quatre nouvelles migrations SQL et un dossier d'Edge Function non déployée ; **aucune migration n'a été appliquée à la base distante**. Render : le blueprint de dépôt ne déclare plus de previews automatiques et utilise `npm ci && npm test && npm run build` ; **le service officiel, son auto-déploiement, ses variables et ses logs n'ont pas été modifiés ni vérifiés**. Aucun commit de ce chantier n'a été fusionné dans `main`, aucun déploiement n'a été déclenché volontairement.
+GitHub : modifications sur `arena/b65591cf-jotcolis` uniquement, poussées dans les commits `837eebc` et `3045dc8` ; CI étendue à toutes les branches avec `npm ci`, tests et build. Supabase : quatre nouvelles migrations SQL et un dossier d'Edge Function non déployée ; **aucune migration n'a été appliquée à la base distante**. Render : le blueprint de dépôt ne déclare plus de previews automatiques et utilise `npm ci && npm test && npm run build` ; **le service officiel, son auto-déploiement, ses variables et ses logs n'ont pas été modifiés ni vérifiés**. Aucun commit de ce chantier n'a été fusionné dans `main`, aucun déploiement n'a été déclenché volontairement.
 
 ## 11. Tests exécutés et résultats
 
